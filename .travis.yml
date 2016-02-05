@@ -1,0 +1,11 @@
+language: node_js
+node_js:
+  - "5.3"
+  - "4.2.3"
+  - "0.12"
+  - "0.11"
+  - "0.10"
+env:
+- NODE_TLS_REJECT_UNAUTHORIZED=0
+script: "npm run-script test-cover"
+after_script: "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
