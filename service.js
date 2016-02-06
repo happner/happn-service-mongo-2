@@ -49,7 +49,7 @@ DataMongoService.prototype.initialize = function(config, done){
         if(err) done(err);
         else{
 
-            db.ensureIndex('path_index', {_path:1}, {unique:true, w:1}, function(e, indexName){
+            db.ensureIndex('path_index', {path:1}, {unique:true, w:1}, function(e, indexName){
 
                 if (!e){
                     _this.config = config;
@@ -90,7 +90,7 @@ DataMongoService.prototype.saveTag = function(path, tag, data, callback){
 
             // store out of actual address space
             _tag:tag,
-            _path: '/_TAGS' + path + '/' + shortid.generate()
+            path: '/_TAGS' + path + '/' + shortid.generate()
         }
 
         _this.db.insert(tagData, function(e, tag){
@@ -148,8 +148,8 @@ DataMongoService.prototype.parseFields = function(fields){
                 //ignore _id
                 if (this.key == '_id') return;
 
-                 //ignore _path
-                if (this.key == '_path') return;
+                 //ignore path
+                if (this.key == 'path') return;
 
                 //look in the right place for created
                 if (this.key == '_meta.created'){
@@ -206,10 +206,10 @@ DataMongoService.prototype.get = function(path, parameters, callback){
 
         if (path.indexOf('*') >= 0) {
             single = false;
-            dbCriteria.$and.push({"_path":{ $regex: new RegExp(path.replace(/[*]/g,'.*'))}});
+            dbCriteria.$and.push({"path":{ $regex: new RegExp(path.replace(/[*]/g,'.*'))}});
         }
         else {
-            dbCriteria.$and.push({"_path":path});
+            dbCriteria.$and.push({"path":path});
         }
 
         if (parameters.criteria){
@@ -217,18 +217,17 @@ DataMongoService.prototype.get = function(path, parameters, callback){
             dbCriteria.$and.push(_this.parseFields(parameters.criteria));
         }
 
-        var cursor = _this.db.find(dbCriteria, dbFields);
+        console.log('doing find:::', dbCriteria, dbFields);
 
-        if (parameters.options.sort){
-            cursor = cursor.sort(_this.parseFields(parameters.options.sort));
-        }
+        var searchOptions = {};
+
+        if (parameters.options.sort)
+           searchOptions.sort = parameters.options.sort;
 
         if (parameters.options.limit)
-            cursor = cursor.limit(parameters.options.limit);
+            searchOptions.limit = parameters.options.limit;
 
-        cursor.exec(function(e, items){
-
-            if (e) return callback(e);
+        _this.db.find(dbCriteria, searchOptions).toArray(function(e, items){
 
             if (parameters.options.path_only) {
                 return callback(e, {
@@ -239,14 +238,17 @@ DataMongoService.prototype.get = function(path, parameters, callback){
             }
 
             if (single) {
-                if (!items[0]) return callback(e, null);
-                return callback(e, _this.transform(items[0]));
+                if (!items[0]) return callback(null, null);
+                return callback(null, _this.transform(items[0]));
             }
 
             callback(null, items.map(function(item) {
                 return _this.transform(item);
             }));
+
+
         });
+
 
     }catch(e){
         callback(e);
@@ -309,7 +311,7 @@ DataMongoService.prototype.upsert = function(path, data, options, callback){
 
             setData.created = previous.created;
             setData.modified = Date.now();
-            setData._path = previous._path;
+            setData.path = previous.path;
 
             _this.upsertInternal(path, setData, options, true, callback);
 
@@ -327,7 +329,7 @@ DataMongoService.prototype.transform = function(dataObj, additionalMeta){
     transformed.data = dataObj.data;
 
     transformed._meta = {
-        path:dataObj._path,
+        path:dataObj.path,
         tag:dataObj._tag
     }
 
@@ -347,13 +349,11 @@ DataMongoService.prototype.transform = function(dataObj, additionalMeta){
 
 DataMongoService.prototype.upsertInternal =function(path, setData, options, dataWasMerged, callback){
     var _this = this;
-    var setParameters = {$set: {"data":setData.data, "_path":setData._meta.path}, $setOnInsert:{"created":Date.now()}};
+    var setParameters = {$set: {"data":setData.data, "path":setData._meta.path}, $setOnInsert:{"created":Date.now()}};
 
     console.log('have setParameters:::', setParameters);
 
-    _this.db.update({"_path":path}, setParameters, {upsert:true}, function(err, response) {
-
-
+    _this.db.update({"path":path}, setParameters, {upsert:true}, function(err, response) {
 
         if (err){
 
@@ -365,15 +365,7 @@ DataMongoService.prototype.upsertInternal =function(path, setData, options, data
             return callback(err);
         }
 
-        var created = null;
-
-        if (response.upserted)
-            created = response.upserted[0];
-
-        console.log('did update:::', response);
-
         if (dataWasMerged && !options.tag) {
-            if (created) return callback(null, _this.transform(created));
             return callback(null, _this.transform(setData, setData._meta));
         }
 
@@ -390,9 +382,7 @@ DataMongoService.prototype.upsertInternal =function(path, setData, options, data
 
         if (!dataWasMerged && !options.tag){ // no prefetched object, and we dont need to tag - we need to fetch the object
 
-            if (created) return callback(null, _this.transform(created));
-
-            setData._path = path;
+            setData.path = path;
             setData.modified = Date.now();
             callback(null, _this.transform(setData, setData._meta));
 
@@ -404,10 +394,10 @@ DataMongoService.prototype.upsertInternal =function(path, setData, options, data
 DataMongoService.prototype.remove = function(path, options, callback){
     var _this = this;
 
-    var criteria = {"_path":path};
+    var criteria = {"path":path};
 
     if (path.indexOf('*') > -1)
-        criteria = {"_path":{ $regex: new RegExp(path.replace(/[*]/g,'.*'))  }};
+        criteria = {"path":{ $regex: new RegExp(path.replace(/[*]/g,'.*'))  }};
 
     _this.db.remove(criteria, { multi: true }, function(err, removed){
 

@@ -41,6 +41,32 @@ describe('happn-service-mongo functional tests', function() {
 
   });
 
+  it('gets data', function(callback) {
+
+     serviceInstance.upsert('/get/' + testId, {"test":"data"}, {}, function(e, response){
+
+      if (e) return callback(e);
+
+      console.log('set response:::', response);
+
+      expect(response.data.test).to.equal("data");
+
+      serviceInstance.get('/get/' + testId, {}, function(e, response){
+
+        if (e) return callback(e);
+
+        console.log('get response:::', response);
+        expect(response._meta.path).to.equal('/get/' + testId);
+        expect(response.data.test).to.equal("data");
+
+        callback();
+
+      });
+
+    });
+
+  });
+
   it('merges data', function(callback) {
 
     serviceInstance.upsert('/merge/' + testId, {"test":"data"}, {}, function(e, response){
@@ -70,9 +96,7 @@ describe('happn-service-mongo functional tests', function() {
 
   });
 
-  xit('gets data', function(callback) {
 
-  });
 
   xit('gets data with wildcard', function(callback) {
 
