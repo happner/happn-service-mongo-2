@@ -349,29 +349,23 @@ DataMongoService.prototype.transform = function(dataObj, additionalMeta){
 
 DataMongoService.prototype.upsertInternal =function(path, setData, options, dataWasMerged, callback){
     var _this = this;
-    var setParameters = {$set: {"data":setData.data, "path":setData._meta.path}, $setOnInsert:{"created":Date.now()}};
 
-    console.log('have setParameters:::', setParameters);
+    var modifiedOn = Date.now();
+    var setParameters = {$set: {"data":setData.data, "path":setData._meta.path, "modified":modifiedOn}, $setOnInsert:{"created":modifiedOn}};
 
-    _this.db.update({"path":path}, setParameters, {upsert:true}, function(err, response) {
+    _this.db.findAndModify({"path":path}, null, setParameters, {upsert:true, "new":true}, function(err, response) {
 
         if (err){
-
             //data with circular references can cause callstack exceeded errors
-
             if (err.toString() == 'RangeError: Maximum call stack size exceeded')
                 return callback(new Error('callstack exceeded: possible circular data in happn set method'));
 
             return callback(err);
         }
 
-        if (dataWasMerged && !options.tag) {
-            return callback(null, _this.transform(setData, setData._meta));
-        }
-
         if (dataWasMerged && options.tag){ // we have a prefetched object, and we want to tag it
 
-            return _this.saveTag(path, options.tag, setData, function(e, tagged){
+            return _this.saveTag(path, options.tag, response.value, function(e, tagged){
 
                 if (e)
                     return callback(e);
@@ -380,13 +374,7 @@ DataMongoService.prototype.upsertInternal =function(path, setData, options, data
             });
         }
 
-        if (!dataWasMerged && !options.tag){ // no prefetched object, and we dont need to tag - we need to fetch the object
-
-            setData.path = path;
-            setData.modified = Date.now();
-            callback(null, _this.transform(setData, setData._meta));
-
-        }
+        callback(null, _this.transform(response.value));
 
     }.bind(_this));
 }

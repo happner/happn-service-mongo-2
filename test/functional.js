@@ -27,17 +27,25 @@ describe('happn-service-mongo functional tests', function() {
 
   it('sets data', function(callback) {
 
-    serviceInstance.upsert('/set/' + testId, {"test":"data"}, {}, function(e, response){
+    var beforeCreatedOrModified = Date.now();
 
-      if (e) return callback(e);
+    setTimeout(function(){
 
-      console.log('set response:::', response);
+      serviceInstance.upsert('/set/' + testId, {"test":"data"}, {}, function(e, response){
 
-      expect(response.data.test).to.equal("data");
+        if (e) return callback(e);
 
-      callback();
+        expect(response.data.test).to.equal("data");
 
-    });
+        expect(response._meta.created > beforeCreatedOrModified).to.equal(true);
+        expect(response._meta.modified > beforeCreatedOrModified).to.equal(true);
+
+        callback();
+
+      });
+
+
+    }, 100);
 
   });
 
@@ -47,15 +55,12 @@ describe('happn-service-mongo functional tests', function() {
 
       if (e) return callback(e);
 
-      console.log('set response:::', response);
-
       expect(response.data.test).to.equal("data");
 
       serviceInstance.get('/get/' + testId, {}, function(e, response){
 
         if (e) return callback(e);
 
-        console.log('get response:::', response);
         expect(response._meta.path).to.equal('/get/' + testId);
         expect(response.data.test).to.equal("data");
 
@@ -69,17 +74,34 @@ describe('happn-service-mongo functional tests', function() {
 
   it('merges data', function(callback) {
 
+    var initialCreated;
+
     serviceInstance.upsert('/merge/' + testId, {"test":"data"}, {}, function(e, response){
 
       if (e) return callback(e);
+
+      initialCreated = response._meta.created;
 
       serviceInstance.upsert('/merge/' + testId, {"test1":"data1"}, {merge:true}, function(e, response){
 
         if (e) return callback(e);
 
-        console.log('set response:::', response);
+        expect(response._meta.created).to.equal(initialCreated);
 
-        callback();
+        serviceInstance.get('/merge/' + testId, {}, function(e, response){
+
+          if (e) return callback(e);
+
+          console.log('merge get response:::', response);
+
+          expect(response.data.test).to.equal("data");
+          expect(response.data.test1).to.equal("data1");
+          expect(response._meta.created).to.equal(initialCreated);
+          expect(response._meta.modified > initialCreated).to.equal(true);
+
+          callback();
+
+        });
 
       });
 
@@ -95,8 +117,6 @@ describe('happn-service-mongo functional tests', function() {
   xit('removes data', function(callback) {
 
   });
-
-
 
   xit('gets data with wildcard', function(callback) {
 
