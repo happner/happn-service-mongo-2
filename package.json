@@ -16,12 +16,13 @@
     "url": "https://github.com/happner/happn-service-mongo.git"
   },
   "dependencies": {
+    "happn-logger": "^0.0.1",
     "mongodb": "^2.1.6",
+    "node-uuid": "^1.4.7",
+    "traverse": "0.6.6",
     "underscore": "1.8.3",
     "underscore.deep": "0.5.1",
-    "underscore.string": "3.2.2",
-    "traverse": "0.6.6",
-    "happn-logger": "^0.0.1"
+    "underscore.string": "3.2.2"
   },
   "devDependencies": {
     "chai": "^3.2.0",

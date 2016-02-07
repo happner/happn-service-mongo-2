@@ -110,7 +110,26 @@ describe('happn-service-mongo functional tests', function() {
 
   });
 
-  xit('tags data', function(callback) {
+  it.only('tags data', function(callback) {
+
+    var tag = require("shortid").generate();
+
+    serviceInstance.upsert('/tag/' + testId, {"test":"data"}, {}, function(e, response){
+
+      if (e) return callback(e);
+
+      console.log('doing a tag:::', response);
+
+      serviceInstance.upsert('/tag/' + testId, {"test":"data"}, {"tag":tag}, function(e, response){
+
+        if (e) return callback(e);
+
+        console.log('tag response:::', response);
+
+
+      });
+
+    });
 
   });
 

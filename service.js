@@ -1,6 +1,6 @@
 var _s = require('underscore.string');
 var traverse = require('traverse');
-var shortid = require('shortid');
+var uuid = require('node-uuid');
 
 module.exports = DataMongoService;
 
@@ -78,51 +78,6 @@ DataMongoService.prototype.getOneByPath = function(path, fields, callback){
         return callback(null, findresult);
 
      });
-}
-
-DataMongoService.prototype.saveTag = function(path, tag, data, callback){
-    var _this = this;
-
-     var insertTag = function(snapshotData){
-
-        var tagData = {
-            data:snapshotData,
-
-            // store out of actual address space
-            _tag:tag,
-            path: '/_TAGS' + path + '/' + shortid.generate()
-        }
-
-        _this.db.insert(tagData, function(e, tag){
-
-            if (e)
-                callback(e);
-            else{
-                callback(null, tag);
-            }
-
-
-        });
-     }
-
-     if (!data){
-
-        _this.getOneByPath(path, null, function(e, found){
-
-            if (e)
-                return callback(e);
-
-            if (found)
-            {
-                data = found;
-                insertTag(found);
-            }
-            else
-                return callback('Attempt to tag something that doesn\'t exist in the first place');
-        });
-
-     }else
-         insertTag(data);
 }
 
 DataMongoService.prototype.parseFields = function(fields){
@@ -278,48 +233,41 @@ DataMongoService.prototype.upsert = function(path, data, options, callback){
     if (data) delete data._meta;
 
     if (options.set_type == 'sibling'){
-        //appends an item with a path that matches the message path - but made unique by a shortid at the end of the path
+        //appends an item with a path that matches the message path - but made unique by a uuid at the end of the path
         if (!_s.endsWith(path, '/'))
             path += '/';
 
-        path += shortid.generate();
+        path += uuid.v4();
 
     }
 
-    var setData = _this.formatSetData(path, data);
-
-    if (options.tag) {
-        if (data != null) {
-            return callback(new Error('Cannot set tag with new data.'));
-        }
-        setData.data = {};
-        options.merge = true;
-    }
+    if (options.tag) options.merge = true;
 
     if (options.merge){
 
         return _this.getOneByPath(path, null, function(e, previous){
 
-            if (e)
-                return callback(e);
+            if (e) return callback(e);
 
-            if (!previous) return _this.upsertInternal(path, setData, options, true, callback);
+            if (options.tag){
 
-            for (var propertyName in previous.data)
-                if (setData.data[propertyName] === null || setData.data[propertyName] === undefined)
-                    setData.data[propertyName] = previous.data[propertyName];
+                if (!previous) return callback(new Error('attempt to tag non-existent data'));
+                _this.upsertInternal('/_TAGS' + previous.path + '/' + uuid.v4(), previous, {}, callback);
 
-            setData.created = previous.created;
-            setData.modified = Date.now();
-            setData.path = previous.path;
+            }else{
 
-            _this.upsertInternal(path, setData, options, true, callback);
+                for (var propertyName in previous.data)
+                    if (data[propertyName] === null || data[propertyName] === undefined)
+                        data[propertyName] = previous.data[propertyName];
+
+                _this.upsertInternal(path, data, options, callback);
+            }
 
          });
 
     }
 
-    _this.upsertInternal(path, setData, options, false, callback);
+    _this.upsertInternal(path, data, options, callback);
 
 }
 
@@ -347,11 +295,11 @@ DataMongoService.prototype.transform = function(dataObj, additionalMeta){
     return transformed;
 }
 
-DataMongoService.prototype.upsertInternal =function(path, setData, options, dataWasMerged, callback){
+DataMongoService.prototype.upsertInternal =function(path, data, options, callback){
     var _this = this;
 
     var modifiedOn = Date.now();
-    var setParameters = {$set: {"data":setData.data, "path":setData._meta.path, "modified":modifiedOn}, $setOnInsert:{"created":modifiedOn}};
+    var setParameters = {$set: {"data":data, "path":path, "modified":modifiedOn}, $setOnInsert:{"created":modifiedOn}};
 
     _this.db.findAndModify({"path":path}, null, setParameters, {upsert:true, "new":true}, function(err, response) {
 
@@ -361,17 +309,6 @@ DataMongoService.prototype.upsertInternal =function(path, setData, options, data
                 return callback(new Error('callstack exceeded: possible circular data in happn set method'));
 
             return callback(err);
-        }
-
-        if (dataWasMerged && options.tag){ // we have a prefetched object, and we want to tag it
-
-            return _this.saveTag(path, options.tag, response.value, function(e, tagged){
-
-                if (e)
-                    return callback(e);
-
-                return callback(null, _this.transform(tagged, tagged._meta));
-            });
         }
 
         callback(null, _this.transform(response.value));
