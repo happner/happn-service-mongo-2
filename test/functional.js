@@ -110,7 +110,7 @@ describe('happn-service-mongo functional tests', function() {
 
   });
 
-  it.only('tags data', function(callback) {
+  it('tags data', function(callback) {
 
     var tag = require("shortid").generate();
 
@@ -118,14 +118,16 @@ describe('happn-service-mongo functional tests', function() {
 
       if (e) return callback(e);
 
-      console.log('doing a tag:::', response);
-
       serviceInstance.upsert('/tag/' + testId, {"test":"data"}, {"tag":tag}, function(e, response){
 
         if (e) return callback(e);
 
-        console.log('tag response:::', response);
+        expect(response.data.path).to.equal('/tag/' + testId);
+        expect(response.data.data.test).to.equal('data');
+        expect(response._meta.tag).to.equal(tag);
+        expect(response._meta.path.indexOf('/_TAGS' + '/tag/' + testId)).to.equal(0);
 
+        callback();
 
       });
 

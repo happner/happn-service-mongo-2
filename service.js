@@ -252,7 +252,7 @@ DataMongoService.prototype.upsert = function(path, data, options, callback){
             if (options.tag){
 
                 if (!previous) return callback(new Error('attempt to tag non-existent data'));
-                _this.upsertInternal('/_TAGS' + previous.path + '/' + uuid.v4(), previous, {}, callback);
+                _this.upsertInternal('/_TAGS' + previous.path + '/' + uuid.v4(), previous, {tag:options.tag}, callback);
 
             }else{
 
@@ -274,11 +274,13 @@ DataMongoService.prototype.upsert = function(path, data, options, callback){
 DataMongoService.prototype.transform = function(dataObj, additionalMeta){
     var transformed = {};
 
+    console.log('transforming:::', dataObj);
+
     transformed.data = dataObj.data;
 
     transformed._meta = {
         path:dataObj.path,
-        tag:dataObj._tag
+        tag:dataObj.tag
     }
 
     if (dataObj.created)
@@ -292,6 +294,8 @@ DataMongoService.prototype.transform = function(dataObj, additionalMeta){
            transformed._meta[additionalProperty] = additionalMeta[additionalProperty];
     }
 
+     console.log('transformed:::', transformed);
+
     return transformed;
 }
 
@@ -300,6 +304,9 @@ DataMongoService.prototype.upsertInternal =function(path, data, options, callbac
 
     var modifiedOn = Date.now();
     var setParameters = {$set: {"data":data, "path":path, "modified":modifiedOn}, $setOnInsert:{"created":modifiedOn}};
+
+    if (options.tag)
+        setParameters.$set.tag = options.tag;
 
     _this.db.findAndModify({"path":path}, null, setParameters, {upsert:true, "new":true}, function(err, response) {
 
