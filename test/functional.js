@@ -135,11 +135,82 @@ describe('happn-service-mongo functional tests', function() {
 
   });
 
-  xit('removes data', function(callback) {
+  it('removes data', function(callback) {
+
+     serviceInstance.upsert('/remove/' + testId, {"test":"data"}, {}, function(e, response){
+
+      if (e) return callback(e);
+
+      serviceInstance.remove('/remove/' + testId, {}, function(e, response){
+
+        if (e) return callback(e);
+
+        expect(response._meta.path).to.equal('/remove/' + testId);
+        expect(response.data.removed.result.n).to.equal(1);
+
+        callback();
+
+      });
+
+    });
 
   });
 
-  xit('gets data with wildcard', function(callback) {
+   it('removes multiple data', function(callback) {
+
+     serviceInstance.upsert('/remove/multiple/1/' + testId, {"test":"data"}, {}, function(e, response){
+
+      if (e) return callback(e);
+
+      serviceInstance.upsert('/remove/multiple/2/' + testId, {"test":"data"}, {}, function(e, response){
+
+        if (e) return callback(e);
+
+        serviceInstance.remove('/remove/multiple/*/' + testId, {}, function(e, response){
+
+          if (e) return callback(e);
+
+          expect(response._meta.path).to.equal('/remove/multiple/*/' + testId);
+          expect(response.data.removed.result.n).to.equal(2);
+
+          callback();
+
+        });
+
+      });
+
+    });
+
+  });
+
+  it('gets data with wildcard', function(callback) {
+
+    serviceInstance.upsert('/get/multiple/1/' + testId, {"test":"data"}, {}, function(e, response){
+
+      if (e) return callback(e);
+
+      serviceInstance.upsert('/get/multiple/2/' + testId, {"test":"data"}, {}, function(e, response){
+
+        if (e) return callback(e);
+
+         serviceInstance.get('/get/multiple/*/' + testId, {}, function(e, response){
+
+            //console.log('get multiple response:::', response);
+
+            expect(response.length).to.equal(2);
+            expect(response[0].data.test).to.equal('data');
+            expect(response[0]._meta.path).to.equal('/get/multiple/1/' + testId);
+            expect(response[1].data.test).to.equal('data');
+            expect(response[1]._meta.path).to.equal('/get/multiple/2/' + testId);
+
+            callback();
+
+         });
+
+      });
+
+    });
+
 
   });
 
