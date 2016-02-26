@@ -92,8 +92,6 @@ describe('happn-service-mongo functional tests', function() {
 
           if (e) return callback(e);
 
-          console.log('merge get response:::', response);
-
           expect(response.data.test).to.equal("data");
           expect(response.data.test1).to.equal("data1");
           expect(response._meta.created).to.equal(initialCreated);
@@ -214,7 +212,70 @@ describe('happn-service-mongo functional tests', function() {
 
   });
 
-  xit('gets data with complex search', function(callback) {
+  it('gets data with complex search', function(callback) {
+
+    var test_path_end = require('shortid').generate();
+
+    var complex_obj = {
+      regions: ['North', 'South'],
+      towns: ['North.Cape Town'],
+      categories: ['Action', 'History'],
+      subcategories: ['Action.angling', 'History.art'],
+      keywords: ['bass', 'Penny Siopis'],
+      field1: 'field1'
+    };
+
+
+    var criteria1 = {
+      $or: [{"regions": {$in: ['North', 'South', 'East', 'West']}},
+        {"towns": {$in: ['North.Cape Town', 'South.East London']}},
+        {"categories": {$in: ["Action", "History"]}}],
+      "keywords": {$in: ["bass", "Penny Siopis"]}
+    }
+
+    var options1 = {
+      fields: {"data": 1},
+      sort: {"field1": 1},
+      limit: 1
+    }
+
+    var criteria2 = null;
+
+    var options2 = {
+      fields: null,
+      sort: {"field1": 1},
+      limit: 2
+    }
+
+    serviceInstance.upsert('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex/' + test_path_end, complex_obj, null, function (e, put_result) {
+
+      expect(e == null).to.be(true);
+      serviceInstance.upsert('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex/' + test_path_end + '/1', complex_obj, null, function (e, put_result) {
+        expect(e == null).to.be(true);
+
+        ////////////console.log('searching');
+        serviceInstance.get('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex*', {
+          criteria: criteria1,
+          options: options1
+        }, function (e, search_result) {
+
+          expect(e == null).to.be(true);
+          expect(search_result.length == 1).to.be(true);
+
+          serviceInstance.get('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex*', {
+            criteria: criteria2,
+            options: options2
+          }, function (e, search_result) {
+            expect(e == null).to.be(true);
+            expect(search_result.length == 2).to.be(true);
+            callback(e);
+          });
+
+        });
+
+      });
+
+    });
 
   });
 

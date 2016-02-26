@@ -172,8 +172,6 @@ DataMongoService.prototype.get = function(path, parameters, callback){
             dbCriteria.$and.push(_this.parseFields(parameters.criteria));
         }
 
-        console.log('doing find:::', dbCriteria, dbFields);
-
         var searchOptions = {};
 
         if (parameters.options.sort)
@@ -274,8 +272,6 @@ DataMongoService.prototype.upsert = function(path, data, options, callback){
 DataMongoService.prototype.transform = function(dataObj, additionalMeta){
     var transformed = {};
 
-    console.log('transforming:::', dataObj);
-
     transformed.data = dataObj.data;
 
     transformed._meta = {
@@ -293,8 +289,6 @@ DataMongoService.prototype.transform = function(dataObj, additionalMeta){
         for (var additionalProperty in additionalMeta)
            transformed._meta[additionalProperty] = additionalMeta[additionalProperty];
     }
-
-     console.log('transformed:::', transformed);
 
     return transformed;
 }
