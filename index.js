@@ -256,6 +256,7 @@ DataMongoService.prototype.upsert = function(path, data, options, callback){
 
             }else{
 
+                if (previous)
                 for (var propertyName in previous.data)
                     if (setData.data[propertyName] === null || setData.data[propertyName] === undefined)
                         setData.data[propertyName] = previous.data[propertyName];
