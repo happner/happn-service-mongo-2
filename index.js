@@ -239,6 +239,8 @@ DataMongoService.prototype.upsert = function(path, data, options, callback){
 
     }
 
+    var setData = _this.formatSetData(path, data);
+
     if (options.tag) options.merge = true;
 
     if (options.merge){
@@ -250,22 +252,22 @@ DataMongoService.prototype.upsert = function(path, data, options, callback){
             if (options.tag){
 
                 if (!previous) return callback(new Error('attempt to tag non-existent data'));
-                _this.upsertInternal('/_TAGS' + previous.path + '/' + uuid.v4(), previous, {tag:options.tag}, callback);
+                _this.upsertInternal('/_TAGS' + previous.path + '/' + uuid.v4(), {data:previous}, {tag:options.tag}, callback);
 
             }else{
 
                 for (var propertyName in previous.data)
-                    if (data[propertyName] === null || data[propertyName] === undefined)
-                        data[propertyName] = previous.data[propertyName];
+                    if (setData.data[propertyName] === null || setData.data[propertyName] === undefined)
+                        setData.data[propertyName] = previous.data[propertyName];
 
-                _this.upsertInternal(path, data, options, callback);
+                _this.upsertInternal(path, setData, options, callback);
             }
 
          });
 
     }
 
-    _this.upsertInternal(path, data, options, callback);
+    _this.upsertInternal(path, setData, options, callback);
 
 }
 
@@ -293,11 +295,26 @@ DataMongoService.prototype.transform = function(dataObj, additionalMeta){
     return transformed;
 }
 
-DataMongoService.prototype.upsertInternal =function(path, data, options, callback){
+DataMongoService.prototype.formatSetData = function(path, data){
+
+    if (typeof data != 'object' || data instanceof Array == true || data instanceof Date == true || data == null)
+        data = {value:data};
+
+    var setData = {
+        data: data,
+        _meta: {
+            path: path
+        },
+    }
+
+    return setData;
+}
+
+DataMongoService.prototype.upsertInternal =function(path, setData, options, callback){
     var _this = this;
 
     var modifiedOn = Date.now();
-    var setParameters = {$set: {"data":data, "path":path, "modified":modifiedOn}, $setOnInsert:{"created":modifiedOn}};
+    var setParameters = {$set: {"data":setData.data, "path":path, "modified":modifiedOn}, $setOnInsert:{"created":modifiedOn}};
 
     if (options.tag)
         setParameters.$set.tag = options.tag;

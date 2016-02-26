@@ -4,7 +4,7 @@ describe('happn-service-mongo functional tests', function() {
 
   var expect = require('expect.js');
 
-  var service = require('../service');
+  var service = require('../index');
   var serviceInstance = new service();
 
   var testId = require('shortid').generate();
@@ -277,6 +277,36 @@ describe('happn-service-mongo functional tests', function() {
 
     });
 
+  });
+
+  it('sets value data', function (callback) {
+
+    try {
+      var test_string = require('shortid').generate();
+      var test_base_url = '/a1_eventemitter_embedded_datatypes/' + testId + '/set/string/' + test_string;
+
+      serviceInstance.upsert(test_base_url, test_string, {noPublish: true}, function (e, result) {
+
+        if (!e) {
+
+          expect(result.data.value).to.be(test_string);
+
+          serviceInstance.get(test_base_url, null, function (e, result) {
+
+            if (e) return callback(e);
+
+            expect(result.data.value).to.be(test_string);
+
+            callback(e);
+          });
+        }
+        else
+          callback(e);
+      });
+
+    } catch (e) {
+      callback(e);
+    }
   });
 
 });
