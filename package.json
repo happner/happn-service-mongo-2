@@ -4,7 +4,7 @@
   "version": "0.0.3",
   "main": "./lib/index",
   "scripts": {
-    "test": "mocha silence.js test",
+    "test": "mocha silence.js test/functional && node test/happn-test",
     "test-cover": "istanbul cover _mocha -- silence.js test"
   },
   "keywords": [
@@ -29,6 +29,7 @@
     "coveralls": "^2.11.6",
     "expect.js": "*",
     "gulp": "^3.9.0",
+    "happn-tests": "^0.0.4",
     "istanbul": "^0.4.1",
     "mocha": "*",
     "shortid": "^2.2.4"
