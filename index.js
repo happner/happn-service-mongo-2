@@ -43,7 +43,7 @@ DataMongoService.prototype.initialize = function(config, done){
         config.collection = 'happn';
 
     if (!config.url)
-        config.url = 'mongodb://127.0.0.1:27017/happn';
+        config.url = 'mongodb://127.0.0.1:27017/' + config.collection;
 
      MongoClient.connect(config.url, config.opts, function(err, db) {
         if(err) done(err);
