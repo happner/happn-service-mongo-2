@@ -112,25 +112,23 @@ describe('happn-service-mongo functional tests', function() {
 
     var tag = require("shortid").generate();
 
-    serviceInstance.upsert('/tag/' + testId, {"test":"data"}, {}, function(e, response){
+    serviceInstance.upsert('/tag/' + testId, {"test":"data"}, {}, function(e){
 
       if (e) return callback(e);
 
-      serviceInstance.upsert('/tag/' + testId, {"test":"data"}, {"tag":tag}, function(e, response){
+      serviceInstance.upsert('/tag/' + testId, null, {"tag":tag}, function(e, response){
 
         if (e) return callback(e);
 
-        expect(response.data.path).to.equal('/tag/' + testId);
         expect(response.data.data.test).to.equal('data');
+        expect(response.data._meta.path).to.equal('/tag/' + testId);
         expect(response._meta.tag).to.equal(tag);
         expect(response._meta.path.indexOf('/_TAGS' + '/tag/' + testId)).to.equal(0);
 
         callback();
 
       });
-
     });
-
   });
 
   it('removes data', function(callback) {
@@ -144,14 +142,12 @@ describe('happn-service-mongo functional tests', function() {
         if (e) return callback(e);
 
         expect(response._meta.path).to.equal('/remove/' + testId);
-        expect(response.data.removed.result.n).to.equal(1);
+        expect(response.data.removed).to.equal(1);
 
         callback();
 
       });
-
     });
-
   });
 
    it('removes multiple data', function(callback) {
@@ -164,21 +160,18 @@ describe('happn-service-mongo functional tests', function() {
 
         if (e) return callback(e);
 
-        serviceInstance.remove('/remove/multiple/*/' + testId, {}, function(e, response){
+        serviceInstance.remove('/remove/multiple/*', {}, function(e, response){
 
           if (e) return callback(e);
 
-          expect(response._meta.path).to.equal('/remove/multiple/*/' + testId);
-          expect(response.data.removed.result.n).to.equal(2);
+          expect(response._meta.path).to.equal('/remove/multiple/*');
+          expect(response.data.removed).to.equal(2);
 
           callback();
 
         });
-
       });
-
     });
-
   });
 
   it('gets data with wildcard', function(callback) {
@@ -192,8 +185,6 @@ describe('happn-service-mongo functional tests', function() {
         if (e) return callback(e);
 
          serviceInstance.get('/get/multiple/*/' + testId, {}, function(e, response){
-
-            //console.log('get multiple response:::', response);
 
             expect(response.length).to.equal(2);
             expect(response[0].data.test).to.equal('data');
