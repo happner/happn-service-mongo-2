@@ -31,6 +31,8 @@ DataMongoService.prototype.stop = function (options, callback) {
   }
 };
 
+DataMongoService.prototype.pathField = "path";
+
 DataMongoService.prototype.initialize = function (config, callback) {
 
   var _this = this;
