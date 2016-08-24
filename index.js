@@ -386,3 +386,27 @@ DataMongoService.prototype.remove = function (path, options, callback) {
   });
 
 };
+
+DataMongoService.prototype.addDataStoreFilter = function (pattern, datastoreKey) {
+  this.log.warn('addDataStoreFilter not implemented');
+};
+
+DataMongoService.prototype.removeDataStoreFilter = function (pattern) {
+  this.log.warn('removeDataStoreFilter not implemented');
+};
+
+DataMongoService.prototype.compact = function (dataStoreKey, callback) {
+  this.log.warn('compact not implemented');
+  callback();
+};
+
+DataMongoService.prototype.startCompacting = function (dataStoreKey, interval, callback, compactionHandler) {
+  this.log.warn('startCompacting not implemented');
+  callback();
+};
+
+DataMongoService.prototype.stopCompacting = function (dataStoreKey, callback) {
+  this.log.warn('stopCompacting not implemented');
+  callback();
+};
+//stopCompacting
