@@ -1,7 +1,7 @@
 {
   "name": "happn-service-mongo",
   "description": "service plugin for running happn on a mongo database",
-  "version": "0.0.7",
+  "version": "0.1.1",
   "main": "./lib/index",
   "scripts": {
     "test": "mocha silence.js test/functional && node test/happn-test",
@@ -30,7 +30,7 @@
     "coveralls": "^2.11.6",
     "expect.js": "*",
     "gulp": "^3.9.0",
-    "happn-tests": "1.0.0",
+    "happn-tests": "1.0.2",
     "istanbul": "^0.4.1",
     "mocha": "*",
     "shortid": "^2.2.4"
