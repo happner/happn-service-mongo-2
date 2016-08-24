@@ -1,6 +1,7 @@
 var _s = require('underscore.string');
 var traverse = require('traverse');
 var uuid = require('node-uuid');
+var sift = require('sift');
 
 module.exports = DataMongoService;
 
@@ -128,6 +129,21 @@ DataMongoService.prototype.parseFields = function (fields) {
   return fields;
 };
 
+DataMongoService.prototype.filter = function(criteria, data, callback){
+
+  if (!criteria) return callback(null, data);
+
+  try{
+
+    var filterCriteria = this.parseFields(criteria);
+
+    callback(null, sift(filterCriteria, data));
+  }catch(e){
+    callback(e);
+  }
+
+};
+
 DataMongoService.prototype.get = function (path, parameters, callback) {
   var _this = this;
 
@@ -142,30 +158,22 @@ DataMongoService.prototype.get = function (path, parameters, callback) {
 
     if (!parameters.options) parameters.options = {};
 
-    var dbFields = parameters.options.fields || {};
-    var dbCriteria = {$and: []};
+    //TODO: parameters.options.fields
+
+    var dbFields = {};
+
+    var pathCriteria = {"path": path};
+
     var single = true;
 
-    if (parameters.options.path_only) {
-      dbFields = {_meta: 1}
-    } else if (parameters.options.fields) {
-      dbFields._meta = 1;
-    }
-
-    dbFields = _this.parseFields(dbFields);
+    if (parameters.options.path_only) dbFields = {_meta: 1};
 
     if (path.indexOf('*') >= 0) {
       single = false;
-      dbCriteria.$and.push({"path": {$regex: new RegExp(path.replace(/[*]/g, '.*'))}});
-    }
-    else {
-      dbCriteria.$and.push({"path": path});
+      pathCriteria = {"path": {$regex: new RegExp(path.replace(/[*]/g, '.*'))}};
     }
 
-    if (parameters.criteria) {
-      single = false;
-      dbCriteria.$and.push(_this.parseFields(parameters.criteria));
-    }
+    if (parameters.criteria) single = false;
 
     var searchOptions = {};
 
@@ -173,36 +181,116 @@ DataMongoService.prototype.get = function (path, parameters, callback) {
 
     if (parameters.options.limit) searchOptions.limit = parameters.options.limit;
 
-    if (Object.keys(dbFields).length > 0) searchOptions.fields = dbFields;
+    searchOptions.fields = dbFields;
 
-    _this.db.find(dbCriteria, searchOptions).toArray(function (e, items) {
+    _this.db.find(pathCriteria, searchOptions).toArray(function (e, items) {
 
       if (e) return callback(e);
 
-      if (parameters.options.path_only) {
-        return callback(e, {
-          paths: items.map(function (itm) {
-            return _this.transform(itm);
-          })
-        });
-      }
+      _this.filter(parameters.criteria, items, function(e, filtered){
 
-      if (single) {
-        if (!items[0]) return callback(null, null);
-        return callback(null, _this.transform(items[0]));
-      }
+        if (e) return callback(e);
 
-      callback(null, items.map(function (item) {
-        return _this.transform(item);
-      }));
+        if (parameters.options.path_only) {
+          return callback(e, {
+            paths: filtered.map(function (itm) {
+              return _this.transform(itm, null, parameters.options.fields);
+            })
+          });
+        }
 
+        if (single) {
+          if (!filtered[0]) return callback(null, null);
+          return callback(null, _this.transform(filtered[0], null, parameters.options.fields));
+        }
+
+        callback(null, filtered.map(function (item) {
+          return _this.transform(item, null, parameters.options.fields);
+        }));
+
+      });
     });
-
 
   } catch (e) {
     callback(e);
   }
-}
+};
+
+// DataMongoService.prototype.get = function (path, parameters, callback) {
+//   var _this = this;
+//
+//   try {
+//
+//     if (typeof parameters == 'function') {
+//       callback = parameters;
+//       parameters = null;
+//     }
+//
+//     if (!parameters) parameters = {};
+//
+//     if (!parameters.options) parameters.options = {};
+//
+//     var dbFields = parameters.options.fields || {};
+//     var dbCriteria = {$and: []};
+//     var single = true;
+//
+//     if (parameters.options.path_only) {
+//       dbFields = {_meta: 1}
+//     } else if (parameters.options.fields) {
+//       dbFields._meta = 1;
+//     }
+//
+//     dbFields = _this.parseFields(dbFields);
+//
+//     if (path.indexOf('*') >= 0) {
+//       single = false;
+//       dbCriteria.$and.push({"path": {$regex: new RegExp(path.replace(/[*]/g, '.*'))}});
+//     }
+//     else {
+//       dbCriteria.$and.push({"path": path});
+//     }
+//
+//     if (parameters.criteria) {
+//       single = false;
+//       dbCriteria.$and.push(_this.parseFields(parameters.criteria));
+//     }
+//
+//     var searchOptions = {};
+//
+//     if (parameters.options.sort) searchOptions.sort = parameters.options.sort;
+//
+//     if (parameters.options.limit) searchOptions.limit = parameters.options.limit;
+//
+//     if (Object.keys(dbFields).length > 0) searchOptions.fields = dbFields;
+//
+//     _this.db.find(dbCriteria, searchOptions).toArray(function (e, items) {
+//
+//       if (e) return callback(e);
+//
+//       if (parameters.options.path_only) {
+//         return callback(e, {
+//           paths: items.map(function (itm) {
+//             return _this.transform(itm);
+//           })
+//         });
+//       }
+//
+//       if (single) {
+//         if (!items[0]) return callback(null, null);
+//         return callback(null, _this.transform(items[0]));
+//       }
+//
+//       callback(null, items.map(function (item) {
+//         return _this.transform(item);
+//       }));
+//
+//     });
+//
+//   } catch (e) {
+//     callback(e);
+//   }
+// };
+
 
 DataMongoService.prototype.formatSetData = function (path, data) {
 
@@ -271,7 +359,7 @@ DataMongoService.prototype.upsert = function (path, data, options, callback) {
 
 };
 
-DataMongoService.prototype.transform = function (dataObj, meta) {
+DataMongoService.prototype.transform = function (dataObj, meta, fields) {
 
   var transformed = {};
 
@@ -289,6 +377,13 @@ DataMongoService.prototype.transform = function (dataObj, meta) {
   transformed._meta._id = dataObj._id;
 
   if (dataObj._tag) transformed._meta.tag = dataObj._tag;
+
+  //strip out unwanted fields
+  if (fields){
+    for (var fieldName in transformed){
+      if (fields[fieldName] != 1) delete transformed[fieldName];
+    }
+  }
 
   return transformed;
 };
