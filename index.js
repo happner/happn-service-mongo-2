@@ -175,6 +175,8 @@ DataMongoService.prototype.get = function (path, parameters, callback) {
 
     _this.db.find(dbCriteria, searchOptions).toArray(function (e, items) {
 
+      if (e) return callback(e);
+
       if (parameters.options.path_only) {
         return callback(e, {
           paths: items.map(function (itm) {
@@ -191,7 +193,6 @@ DataMongoService.prototype.get = function (path, parameters, callback) {
       callback(null, items.map(function (item) {
         return _this.transform(item);
       }));
-
 
     });
 
