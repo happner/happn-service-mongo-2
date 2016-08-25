@@ -374,7 +374,7 @@ DataMongoService.prototype.transform = function (dataObj, meta, fields) {
 
   transformed._meta = meta;
   transformed._meta.path = dataObj.path;
-  transformed._meta._id = dataObj._id;
+  transformed._meta._id = dataObj.path;
 
   if (dataObj._tag) transformed._meta.tag = dataObj._tag;
 
