@@ -5,3 +5,7 @@
 ----------------
 - adjustments to work with happner
 
+0.3.2 2016-08-31
+----------------
+- fixed and tested sorting and limiting
+

@@ -144,6 +144,18 @@ DataMongoService.prototype.filter = function(criteria, data, callback){
 
 };
 
+DataMongoService.prototype.__doFind = function(pathCriteria, searchOptions, sortOptions, callback){
+
+  var _this = this;
+
+  if (!sortOptions) _this.db.find(pathCriteria, searchOptions).toArray(callback);
+  else {
+    sortOptions = _this.parseFields(sortOptions);
+    _this.db.find(pathCriteria, searchOptions).sort(sortOptions).toArray(callback);
+  }
+
+};
+
 DataMongoService.prototype.get = function (path, parameters, callback) {
   var _this = this;
 
@@ -177,19 +189,17 @@ DataMongoService.prototype.get = function (path, parameters, callback) {
 
     var searchOptions = {};
 
-    if (parameters.options.sort) searchOptions.sort = parameters.options.sort;
-
-    if (parameters.options.limit) searchOptions.limit = parameters.options.limit;
-
     searchOptions.fields = dbFields;
 
-    _this.db.find(pathCriteria, searchOptions).toArray(function (e, items) {
+    _this.__doFind(pathCriteria, searchOptions, parameters.options.sort, function (e, items) {
 
       if (e) return callback(e);
 
       _this.filter(parameters.criteria, items, function(e, filtered){
 
         if (e) return callback(e);
+
+        if (parameters.options.limit) filtered = filtered.slice(0, parameters.options.limit);
 
         if (parameters.options.path_only) {
           return callback(e, {
