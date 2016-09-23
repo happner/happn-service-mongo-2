@@ -20,5 +20,6 @@ npm-debug.log
 node_modules
 public/*
 .idea/
+.editorconfig
 
 .DS_Store
