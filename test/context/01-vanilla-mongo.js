@@ -1,8 +1,8 @@
-var happn = require('happn')
+var happn = require('happn-3');
 var happn_client = happn.client;
 
 module.exports = {
-  happnDependancy:require('happn'),
+  happnDependancy:require('happn-3'),
   description:"eventemitter embedded functional tests",
   serviceConfig:{
     services: {
@@ -12,17 +12,11 @@ module.exports = {
     }
   },
   publisherClient:function(happnInstance, callback){
-    var config =  {
-      plugin: happn.client_plugins.intra_process,
-      context: happnInstance
-    };
-    happn_client.create(config, callback);
+
+    happnInstance.services.session.localClient(callback);
   },
   listenerClient:function(happnInstance, callback){
-    var config =  {
-      plugin: happn.client_plugins.intra_process,
-      context: happnInstance
-    };
-    happn_client.create(config, callback);
+
+    happnInstance.services.session.localClient(callback);
   }
 };

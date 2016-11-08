@@ -1,9 +1,12 @@
-var happn = require('happn')
+var happn = require('happn-3');
 var happn_client = happn.client;
 
 module.exports = {
-  happnDependancy:require('happn'),
+
+  happnDependancy:require('happn-3'),
+
   description:"eventemitter embedded functional tests",
+
   serviceConfig:{
     secure:true,
     services: {
@@ -12,24 +15,28 @@ module.exports = {
       }
     }
   },
+
   publisherClient:function(happnInstance, callback){
+
     var config =  {
       config:{
         username:'_ADMIN',
         password:'happn'
-      },
-      secure:true
+      }
     };
+
     happn_client.create(config, callback);
   },
+
   listenerClient:function(happnInstance, callback){
+
     var config =  {
-       config:{
+      config:{
         username:'_ADMIN',
         password:'happn'
-      },
-      secure:true
+      }
     };
+
     happn_client.create(config, callback);
   }
 }

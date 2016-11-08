@@ -19,7 +19,7 @@ serviceInstance.initialize(config, function(e){
 		noBenchmarket:true
 	};
 
-	var happn_tests = require('happn-tests').instantiate(testConfig);
+	var happn_tests = require('happn-tests-2').instantiate(testConfig);
 
 	happn_tests.run(function(e){
 		if (e) {
