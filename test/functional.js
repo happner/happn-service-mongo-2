@@ -11,18 +11,16 @@ describe('happn-service-mongo functional tests', function() {
 
   var config = {
     url:'mongodb://127.0.0.1:27017/happn'
-  }
+  };
 
   before('should initialize the service', function(callback) {
 
     serviceInstance.initialize(config, callback);
-
   });
 
   after(function(done) {
 
     serviceInstance.stop(done);
-
   });
 
   it('sets data', function(callback) {
@@ -231,7 +229,6 @@ describe('happn-service-mongo functional tests', function() {
     };
 
     var options1 = {
-      fields: {"data": 1},
       sort: {"field1": 1},
       limit: 1
     };
@@ -250,29 +247,29 @@ describe('happn-service-mongo functional tests', function() {
       serviceInstance.upsert('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex/' + test_path_end + '/1', complex_obj, null, function (e, put_result) {
         expect(e == null).to.be(true);
 
-        serviceInstance.get('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex*', {
-          criteria: criteria1,
-          options: options1
-        }, function (e, search_result) {
-
+        serviceInstance.upsert('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex/' + test_path_end + '/2', {"test":"data"}, null, function (e, put_result) {
           expect(e == null).to.be(true);
-          expect(search_result.length == 1).to.be(true);
 
           serviceInstance.get('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex*', {
-            criteria: criteria2,
-            options: options2
+            criteria: criteria1,
+            options: options1
           }, function (e, search_result) {
+
             expect(e == null).to.be(true);
-            expect(search_result.length == 2).to.be(true);
-            callback(e);
+            expect(search_result.length == 1).to.be(true);
+
+            serviceInstance.get('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex*', {
+              criteria: criteria2,
+              options: options2
+            }, function (e, search_result) {
+              expect(e == null).to.be(true);
+              expect(search_result.length == 2).to.be(true);
+              callback(e);
+            });
           });
-
         });
-
       });
-
     });
-
   });
 
   it('gets data with $not', function(done) {

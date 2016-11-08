@@ -2,6 +2,7 @@ var _s = require('underscore.string');
 var traverse = require('traverse');
 var uuid = require('node-uuid');
 var sift = require('sift');
+var Promise = require('bluebird');
 
 module.exports = DataMongoService;
 
@@ -34,6 +35,67 @@ DataMongoService.prototype.stop = function (options, callback) {
 
 DataMongoService.prototype.pathField = "path";
 
+DataMongoService.prototype.doGet = Promise.promisify(function(message, callback){
+
+  return this.get(message.request.path, message.request.options, function(e, response){
+
+    if (e) return callback(e);
+
+    message.response = response;
+
+    return callback(null, message);
+  });
+});
+
+DataMongoService.prototype.doRemove = Promise.promisify(function(message, callback){
+
+  return this.remove(message.request.path, message.request.options, function(e, response){
+
+    if (e) return callback(e);
+
+    message.response = response;
+
+    return callback(null, message);
+  });
+});
+
+DataMongoService.prototype.doStore = Promise.promisify(function(message, callback){
+
+
+  return this.upsert(message.request.path, message.request.data, message.request.options, function(e, response){
+
+    if (e) return callback(e);
+
+    message.response = response;
+
+    return callback(null, message);
+  });
+});
+
+DataMongoService.prototype.doSecureStore = Promise.promisify(function(message, callback){
+
+
+  if (!message.request.options) message.request.options = {};
+
+  message.request.options.modifiedBy = message.session.user.username;
+
+  return this.upsert(message.request.path, message.request.data, message.request.options, function(e, response){
+
+    if (e) return callback(e);
+
+    message.response = response;
+
+    return callback(null, message);
+  });
+});
+
+DataMongoService.prototype.doNoStore = Promise.promisify(function(message, callback){
+
+  message.response = this.formatSetData(message.request.path, message.request.data);
+
+  return callback(null, message);
+});
+
 DataMongoService.prototype.initialize = function (config, callback) {
 
   var _this = this;
@@ -47,7 +109,9 @@ DataMongoService.prototype.initialize = function (config, callback) {
   if (!config.url) config.url = 'mongodb://127.0.0.1:27017/' + config.collection;
 
   MongoClient.connect(config.url, config.opts, function (err, db) {
+
     if (err) callback(err);
+
     else {
 
       db.ensureIndex('path_index', {path: 1}, {unique: true, w: 1}, function (e) {
@@ -79,7 +143,49 @@ DataMongoService.prototype.getOneByPath = function (path, fields, callback) {
     return callback(null, findresult);
 
   });
-}
+};
+
+DataMongoService.prototype.randomId = function(){
+  return Date.now() + '_' + uuid.v4().replace(/-/g, '');
+};
+
+DataMongoService.prototype.insertTag = function(snapshotData, tag, path, callback){
+
+  var _this = this;
+
+  var tagPath = '/_TAGS' + path + '/' + _this.randomId();
+
+  var tagData = {
+
+    data: snapshotData,
+
+    _tag: tag,
+
+    path: tagPath
+  };
+
+  this.__upsertInternal(tagPath, tagData, {}, false, callback);
+
+};
+
+DataMongoService.prototype.saveTag = function (path, tag, data, callback) {
+
+  if (!data) {
+
+    this.getOneByPath(path, null, function (e, found) {
+
+      if (e) return callback(e);
+
+      if (found) {
+        data = found;
+        this.insertTag(found, tag, path, callback);
+      }
+      else return callback(new Error('Attempt to tag something that doesn\'t exist in the first place'));
+
+    });
+
+  } else this.insertTag(data, tag, path, callback);
+};
 
 DataMongoService.prototype.parseFields = function (fields) {
 
@@ -156,7 +262,23 @@ DataMongoService.prototype.__doFind = function(pathCriteria, searchOptions, sort
 
 };
 
+DataMongoService.prototype.getPathCriteria = function(path){
+
+  var dbCriteria = {$and: []};
+
+  var returnType = path.indexOf('*'); //0,1 == array -1 == single
+
+  if (returnType == 0) dbCriteria.$and.push({'path': {$regex: new RegExp(path.replace(/[*]/g, '.*'))}});//keys with any prefix ie. */joe/bloggs
+
+  else if (returnType > 0) dbCriteria.$and.push({'path': {$regex: new RegExp('^' + path.replace(/[*]/g, '.*'))}});//keys that start with something but any suffix /joe/*/bloggs/*
+
+  else dbCriteria.$and.push({'path': path}); //precise match
+
+  return dbCriteria;
+};
+
 DataMongoService.prototype.get = function (path, parameters, callback) {
+
   var _this = this;
 
   try {
@@ -166,34 +288,39 @@ DataMongoService.prototype.get = function (path, parameters, callback) {
       parameters = null;
     }
 
-    if (!parameters) parameters = {};
-
-    if (!parameters.options) parameters.options = {};
-
-    //TODO: parameters.options.fields
-
     var dbFields = {};
 
-    var pathCriteria = {"path": path};
+    if (!parameters) parameters = {options:{}};
 
-    var single = true;
+    else {
 
-    if (parameters.options.path_only) dbFields = {_meta: 1};
+      if (!parameters.options) parameters.options = {};
 
-    if (path.indexOf('*') >= 0) {
-      single = false;
-      pathCriteria = {"path": {$regex: new RegExp(path.replace(/[*]/g, '.*'))}};
+      else {
+
+        if (parameters.options.path_only) dbFields = {_meta: 1};
+
+        else if (parameters.options.fields){
+          dbFields = parameters.options.fields;
+          dbFields._meta = 1;
+        }
+      }
     }
 
-    if (parameters.criteria) single = false;
+    dbFields = _this.parseFields(dbFields);
 
-    var searchOptions = {};
+    var pathCriteria = _this.getPathCriteria(path);
 
-    searchOptions.fields = dbFields;
+    var searchOptions = {fields:dbFields};
 
     _this.__doFind(pathCriteria, searchOptions, parameters.options.sort, function (e, items) {
 
       if (e) return callback(e);
+
+      if (path.indexOf('*') == -1) {//this is a single item
+        if (items.length == 0) return callback(null, null);
+        return callback(null, _this.transform(items[0], null, parameters.options.fields));
+      }
 
       _this.filter(parameters.criteria, items, function(e, filtered){
 
@@ -203,21 +330,11 @@ DataMongoService.prototype.get = function (path, parameters, callback) {
 
         if (parameters.options.path_only) {
           return callback(e, {
-            paths: filtered.map(function (itm) {
-              return _this.transform(itm, null, parameters.options.fields);
-            })
+            paths: _this.transformAll(filtered)
           });
         }
 
-        if (single) {
-          if (!filtered[0]) return callback(null, null);
-          return callback(null, _this.transform(filtered[0], null, parameters.options.fields));
-        }
-
-        callback(null, filtered.map(function (item) {
-          return _this.transform(item, null, parameters.options.fields);
-        }));
-
+        callback(null, _this.transformAll(filtered, parameters.options.fields));
       });
     });
 
@@ -226,100 +343,14 @@ DataMongoService.prototype.get = function (path, parameters, callback) {
   }
 };
 
-// DataMongoService.prototype.get = function (path, parameters, callback) {
-//   var _this = this;
-//
-//   try {
-//
-//     if (typeof parameters == 'function') {
-//       callback = parameters;
-//       parameters = null;
-//     }
-//
-//     if (!parameters) parameters = {};
-//
-//     if (!parameters.options) parameters.options = {};
-//
-//     var dbFields = parameters.options.fields || {};
-//     var dbCriteria = {$and: []};
-//     var single = true;
-//
-//     if (parameters.options.path_only) {
-//       dbFields = {_meta: 1}
-//     } else if (parameters.options.fields) {
-//       dbFields._meta = 1;
-//     }
-//
-//     dbFields = _this.parseFields(dbFields);
-//
-//     if (path.indexOf('*') >= 0) {
-//       single = false;
-//       dbCriteria.$and.push({"path": {$regex: new RegExp(path.replace(/[*]/g, '.*'))}});
-//     }
-//     else {
-//       dbCriteria.$and.push({"path": path});
-//     }
-//
-//     if (parameters.criteria) {
-//       single = false;
-//       dbCriteria.$and.push(_this.parseFields(parameters.criteria));
-//     }
-//
-//     var searchOptions = {};
-//
-//     if (parameters.options.sort) searchOptions.sort = parameters.options.sort;
-//
-//     if (parameters.options.limit) searchOptions.limit = parameters.options.limit;
-//
-//     if (Object.keys(dbFields).length > 0) searchOptions.fields = dbFields;
-//
-//     _this.db.find(dbCriteria, searchOptions).toArray(function (e, items) {
-//
-//       if (e) return callback(e);
-//
-//       if (parameters.options.path_only) {
-//         return callback(e, {
-//           paths: items.map(function (itm) {
-//             return _this.transform(itm);
-//           })
-//         });
-//       }
-//
-//       if (single) {
-//         if (!items[0]) return callback(null, null);
-//         return callback(null, _this.transform(items[0]));
-//       }
-//
-//       callback(null, items.map(function (item) {
-//         return _this.transform(item);
-//       }));
-//
-//     });
-//
-//   } catch (e) {
-//     callback(e);
-//   }
-// };
-
-
-DataMongoService.prototype.formatSetData = function (path, data) {
-
-  if (typeof data != 'object' || data instanceof Array == true || data instanceof Date == true || data == null)
-    data = {value: data};
-
-  var setData = {
-    data: data,
-    _meta: {
-      path: path
-    }
-  };
-
-  return setData;
-};
-
 DataMongoService.prototype.upsert = function (path, data, options, callback) {
 
   var _this = this;
+
+  if (typeof options === 'function'){
+    callback = options;
+    options = null;
+  }
 
   options = options ? options : {};
 
@@ -327,11 +358,9 @@ DataMongoService.prototype.upsert = function (path, data, options, callback) {
 
   if (options.set_type == 'sibling') {
     //appends an item with a path that matches the message path - but made unique by a shortid at the end of the path
-    if (!_s.endsWith(path, '/'))
-      path += '/';
+    if (!_s.endsWith(path, '/')) path += '/';
 
-    path += uuid.v4().replace(/-/g, '');
-
+    path += _this.randomId();;
   }
 
   var setData = _this.formatSetData(path, data);
@@ -353,7 +382,7 @@ DataMongoService.prototype.upsert = function (path, data, options, callback) {
       if (!previous) return _this.__upsertInternal(path, setData, options, true, callback);
 
       for (var propertyName in previous.data)
-        if (setData.data[propertyName] === null || setData.data[propertyName] === undefined)
+        if (setData.data[propertyName] == null)
           setData.data[propertyName] = previous.data[propertyName];
 
       setData.created = previous.created;
@@ -361,25 +390,25 @@ DataMongoService.prototype.upsert = function (path, data, options, callback) {
       setData._id = previous._id;
 
       _this.__upsertInternal(path, setData, options, true, callback);
-
     });
   }
 
   _this.__upsertInternal(path, setData, options, false, callback);
-
 };
 
 DataMongoService.prototype.transform = function (dataObj, meta, fields) {
 
-  var transformed = {};
-
-  transformed.data = dataObj.data;
+  var transformed = {data:dataObj.data};
 
   if (!meta) {
+
     meta = {};
 
     if (dataObj.created) meta.created = dataObj.created;
+
     if (dataObj.modified) meta.modified = dataObj.modified;
+
+    if (dataObj.modifiedBy) meta.modifiedBy = dataObj.modifiedBy;
   }
 
   transformed._meta = meta;
@@ -388,63 +417,44 @@ DataMongoService.prototype.transform = function (dataObj, meta, fields) {
 
   if (dataObj._tag) transformed._meta.tag = dataObj._tag;
 
-  //strip out unwanted fields
-  if (fields){
-    for (var fieldName in transformed){
-      if (fields[fieldName] != 1) delete transformed[fieldName];
-    }
-  }
+  if (fields) for (var fieldName in transformed) if (fields[fieldName] != 1) delete transformed[fieldName];
 
   return transformed;
 };
 
-DataMongoService.prototype.formatSetData = function (path, data) {
+DataMongoService.prototype.transformAll = function (items, fields) {
 
-  if (typeof data != 'object' || data instanceof Array == true || data instanceof Date == true || data == null)
+  var _this = this;
+
+  return items.map(function (item) {
+    return _this.transform(item, null, fields);
+  })
+};
+
+DataMongoService.prototype.formatSetData = function (path, data, options) {
+
+  if (typeof data != 'object' ||
+    data instanceof Array == true ||
+    data instanceof Date == true ||
+    data == null)
+
     data = {value: data};
 
-  var setData = {
+  if (options && options.modifiedBy)
+    return {
+      data: data,
+      _meta: {
+        path: path,
+        modifiedBy:options.modifiedBy
+      }
+    };
+
+  return {
     data: data,
     _meta: {
       path: path
-    },
-  }
-
-  return setData;
-};
-
-DataMongoService.prototype.insertTag = function(snapshotData, tag, path, callback){
-
-  var _this = this;
-
-  var tagData = {
-    data: snapshotData,
-
-    // store out of actual address space
-    _tag: tag,
-    path: '/_TAGS' + path + '/' + uuid.v4().replace(/-/g, '')
+    }
   };
-
-  _this.db.insert(tagData, function (e, tag) {
-
-    if (e) return callback(e);
-    callback(null, _this.transform(tag.ops[0]));
-  });
-};
-
-DataMongoService.prototype.saveTag = function (path, tag, callback) {
-
-  var _this = this;
-
-  _this.getOneByPath(path, null, function (e, found) {
-
-    if (e) return callback(e);
-
-    if (!found) return callback(new Error('Attempt to tag something that doesn\'t exist in the first place'));
-
-    _this.insertTag(_this.transform(found), tag, path, callback);
-
-  });
 };
 
 DataMongoService.prototype.__upsertInternal = function (path, setData, options, dataWasMerged, callback) {
@@ -457,7 +467,11 @@ DataMongoService.prototype.__upsertInternal = function (path, setData, options, 
     $setOnInsert: {"created": modifiedOn}
   };
 
-  if (options.tag) return this.saveTag(path, options.tag, callback);
+  if (options.tag) return this.saveTag(path, options.tag, setData, callback);
+
+  if (setData._tag) setParameters.$set._tag = setData._tag;
+
+  if (setData._meta && setData._meta.modifiedBy) setParameters.$set.modifiedBy = setData._meta.modifiedBy;
 
   _this.db.findAndModify({"path": path}, null, setParameters, {upsert: true, "new": true}, function (err, response) {
 
@@ -476,9 +490,7 @@ DataMongoService.prototype.__upsertInternal = function (path, setData, options, 
 DataMongoService.prototype.remove = function (path, options, callback) {
   var criteria = {'path': path};
 
-  if (path.indexOf('*') > -1) criteria = {'path': {$regex: new RegExp(path.replace(/[*]/g, '.*'))}};
-
-  this.db.remove(criteria, {multi: true}, function (err, removed) {
+  this.db.remove(this.getPathCriteria(path), {multi: true}, function (err, removed) {
 
     if (err) return callback(err);
 
