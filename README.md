@@ -1,4 +1,4 @@
-[![npm](https://img.shields.io/npm/v/happn-service-mongo.svg)](https://www.npmjs.com/package/happn-service-mongo) [![Build Status](https://travis-ci.org/happner/happn-service-mongo.svg?branch=master)](https://travis-ci.org/happner/happn-service-mongo) [![Coverage Status](https://coveralls.io/repos/happner/happn-service-mongo/badge.svg?branch=master&service=github)](https://coveralls.io/github/happner/happn-service-mongo?branch=master) [![David](https://img.shields.io/david/happner/happn-service-mongo.svg)]()
+[![npm](https://img.shields.io/npm/v/happn-service-mongo-2.svg)](https://www.npmjs.com/package/happn-service-mongo-2) [![Build Status](https://travis-ci.org/happner/happn-service-mongo-2.svg?branch=master)](https://travis-ci.org/happner/happn-service-mongo-2) [![Coverage Status](https://coveralls.io/repos/happner/happn-service-mongo-2/badge.svg?branch=master&service=github)](https://coveralls.io/github/happner/happn-service-mongo-2?branch=master) [![David](https://img.shields.io/david/happner/happn-service-mongo-2.svg)]()
 
 <img src="https://raw.githubusercontent.com/happner/happner-website/master/images/HAPPN%20Logo%20B.png" width="300"></img>
 
@@ -27,13 +27,13 @@ Getting started
 npm install happner happn-service-mongo --save
 ```
 
-See [happner](https://github.com/happner/happner) for full complement of config.
+See [happner](https://github.com/happner/happner-2) for full complement of config.
 
 ```javascript
 var Happner = require('happner');
 
 var config = {
-  datalayer: {
+  happn: {
     plugin: 'happn-service-mongo',
     config: {
       collection: 'happner',
@@ -60,7 +60,7 @@ Happner.create(config)
 npm install happn happn-service-mongo --save
 ```
 
-See [happn](https://github.com/happner/happn) for full complement of config.
+See [happn](https://github.com/happner/happn-3) for full complement of config.
 
 ```javascript
 var Happn = require('happn');
