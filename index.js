@@ -1,6 +1,6 @@
 var _s = require('underscore.string');
 var traverse = require('traverse');
-var uuid = require('node-uuid');
+var uuid = require('uuid');
 var sift = require('sift');
 var Promise = require('bluebird');
 
