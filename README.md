@@ -89,3 +89,9 @@ Happn.service.create(config)
   });
 
 ```
+
+##release 0.1.0
+
+ - ability to partition db's and collections by path
+ - allow for update or findAndModify depending on options
+ - embedded LRU cache, that can use redis pubsub to share state around

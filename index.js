@@ -1,8 +1,11 @@
-var _s = require('underscore.string');
-var traverse = require('traverse');
-var uuid = require('node-uuid');
-var sift = require('sift');
-var Promise = require('bluebird');
+var _s = require('underscore.string')
+  , traverse = require('traverse')
+  , uuid = require('node-uuid')
+  , sift = require('sift')
+  , Promise = require('bluebird')
+  , url = require('url')
+  , async = require('async')
+;
 
 module.exports = DataMongoService;
 
@@ -96,6 +99,29 @@ DataMongoService.prototype.doNoStore = Promise.promisify(function(message, callb
   return callback(null, message);
 });
 
+DataMongoService.prototype.getDBConnectionOpts = function(connUrl, collection){
+
+  var urlParts = url.parse(connUrl);
+
+  var config = {};
+
+  if (urlParts.pathname){
+
+    var pathParts = urlParts.pathname.split('/');
+
+    if (pathParts.length == 2 && pathParts[1] != ''){
+      //we have a collection in the url
+      config.url = urlParts.protocol + '//' + urlParts.host;
+      config.collection = pathParts[1];
+    }
+  } else config.url = connUrl;
+
+  //override
+  if (collection) config.collection = collection;
+
+  return config;
+};
+
 DataMongoService.prototype.initialize = function (config, callback) {
 
   var _this = this;
@@ -104,30 +130,151 @@ DataMongoService.prototype.initialize = function (config, callback) {
 
   var MongoClient = Datastore.MongoClient;
 
-  if (!config.collection) config.collection = 'happn';
+  _this.config = config;
 
-  if (!config.url) config.url = 'mongodb://127.0.0.1:27017/' + config.collection;
+  _this.ObjectID = Datastore.ObjectID;
 
-  MongoClient.connect(config.url, config.opts, function (err, db) {
+  if (!_this.config.url) _this.config.url = 'mongodb://127.0.0.1:27017';
 
-    if (err) callback(err);
+  else {
+
+    var defaultOpts = _this.getDBConnectionOpts(_this.config.url, _this.config.collection);
+
+    _this.config.url = defaultOpts.url;
+    _this.config.collection = defaultOpts.collection;
+  }
+
+  if (!_this.config.collection) _this.config.collection = 'happn';
+
+  if (!config.datastores || config.datastores.length == 0) {
+
+    config.datastores = [{
+      name:'default',
+      url:_this.config.url,
+      collection:_this.config.collection
+    },{
+      name:'system',
+      url:_this.config.url,
+      collection:'happn-system',
+      patterns:['/_SYSTEM/*']
+
+    }];
+  }
+
+  _this.datastores = {};
+  _this.dataroutes = {};
+
+  var dataStorePos = 0;
+
+  async.eachSeries(_this.config.datastores, function(datastoreConfig, datastoreCallback){
+
+    if (!datastoreConfig.name) return datastoreCallback(new Error('invalid configuration, datastore config at position ' + dataStorePos + ' has no name'));
+
+    if (dataStorePos == 0) _this.defaultDatastore = datastoreConfig.name;//just in case we havent set a default
+
+    dataStorePos++;
+
+    if (!datastoreConfig.collection) datastoreConfig.collection = datastoreConfig.name;
+
+    if (!datastoreConfig.url) datastoreConfig.url = _this.config.url;
 
     else {
 
-      db.ensureIndex('path_index', {path: 1}, {unique: true, w: 1}, function (e) {
+      var datastoreOpts = _this.getDBConnectionOpts(datastoreConfig.url, datastoreConfig.collection);
 
-        if (!e) {
-          _this.config = config;
-          _this.db = db.collection(config.collection);
-          _this.ObjectID = Datastore.ObjectID;
-          callback();
-        } else
-          callback(e);
+      datastoreConfig.url = datastoreOpts.url;
+      datastoreConfig.collection = datastoreOpts.collection;
 
-      });
     }
+
+    _this.datastores[datastoreConfig.name] = {};
+
+    if (!datastoreConfig.settings) datastoreConfig.settings = {};
+
+    if (!datastoreConfig.patterns) datastoreConfig.patterns = [];
+
+    //make sure we match the special /_TAGS patterns to find the right db for a tag
+    datastoreConfig.patterns.every(function (pattern) {
+
+      if (pattern.indexOf('/') == 0) pattern = pattern.substring(1, pattern.length);
+
+      _this.addDataStoreFilter(pattern, datastoreConfig.name);
+
+      return true;
+    });
+
+    //forces the default datastore
+    if (datastoreConfig.isDefault) _this.defaultDatastore = datastoreConfig.name;
+
+    console.log('ds filter:::', datastoreConfig.url + '/' + datastoreConfig.collection);
+
+    MongoClient.connect (datastoreConfig.url + '/' + datastoreConfig.collection, datastoreConfig.opts, function (err, db) {
+
+      if (err) datastoreCallback(err);
+
+      else {
+
+        db.ensureIndex('path_index', {path: 1}, {unique: true, w: 1}, function (e) {
+
+          if (!e) {
+
+            _this.datastores[datastoreConfig.name].config = datastoreConfig;
+            _this.datastores[datastoreConfig.name].db = db.collection(datastoreConfig.collection);
+
+            datastoreCallback();
+
+          } else datastoreCallback(e);
+        });
+      }
+    });
+
+  }, function(e){
+
+    if (e) return callback(e);
+
+    _this.db = function (path) {
+
+      for (var dataStoreRoute in _this.dataroutes) if (_this.happn.services.utils.wildcardMatch(dataStoreRoute, path)) return _this.dataroutes[dataStoreRoute].db;
+
+      console.log('laoding default ds:::');
+      console.log(_this.defaultDatastore);
+      console.log(_this.datastores);
+
+      return _this.datastores[_this.defaultDatastore].db;
+    };
+
+    callback();
+
   });
-}
+};
+
+DataMongoService.prototype.addDataStoreFilter = function (pattern, datastoreKey) {
+
+  if (!datastoreKey) throw new Error('missing datastoreKey parameter');
+
+  var dataStore = this.datastores[datastoreKey];
+
+  if (!dataStore) throw new Error('no datastore with the key ' + datastoreKey + ', exists');
+
+  var tagPattern = pattern.toString();
+
+  if (tagPattern.indexOf('/') == 0) tagPattern = tagPattern.substring(1, tagPattern.length);
+
+  this.dataroutes[pattern] = dataStore;
+  this.dataroutes['/_TAGS/' + tagPattern] = dataStore;
+};
+
+DataMongoService.prototype.removeDataStoreFilter = function (pattern) {
+
+  var tagPattern = pattern.toString();
+
+  if (tagPattern.indexOf('/') == 0)
+    tagPattern = tagPattern.substring(1, tagPattern.length);
+
+  delete this.dataroutes[pattern];
+  delete this.dataroutes['/_TAGS/' + tagPattern];
+
+};
 
 DataMongoService.prototype.getOneByPath = function (path, fields, callback) {
   var _this = this;
@@ -135,7 +282,7 @@ DataMongoService.prototype.getOneByPath = function (path, fields, callback) {
   if (!fields)
     fields = {};
 
-  _this.db.findOne({path: path}, fields, function (e, findresult) {
+  _this.db(path).findOne({path: path}, fields, function (e, findresult) {
 
     if (e)
       return callback(e);
@@ -153,7 +300,11 @@ DataMongoService.prototype.insertTag = function(snapshotData, tag, path, callbac
 
   var _this = this;
 
-  var tagPath = '/_TAGS' + path + '/' + _this.randomId();
+  var baseTagPath = '/_TAGS';
+
+  if (path.substring(0, 1) != '/') baseTagPath += '/';
+
+  var tagPath = baseTagPath + path + '/' + _this.randomId();
 
   var tagData = {
 
@@ -250,16 +401,21 @@ DataMongoService.prototype.filter = function(criteria, data, callback){
 
 };
 
-DataMongoService.prototype.__doFind = function(pathCriteria, searchOptions, sortOptions, callback){
+DataMongoService.prototype.__doFind = function(path, searchOptions, sortOptions, callback){
 
   var _this = this;
 
-  if (!sortOptions) _this.db.find(pathCriteria, searchOptions).toArray(callback);
-  else {
-    sortOptions = _this.parseFields(sortOptions);
-    _this.db.find(pathCriteria, searchOptions).sort(sortOptions).toArray(callback);
-  }
+  var db = _this.db(path);
 
+  var pathCriteria = _this.getPathCriteria(path);
+
+  if (!sortOptions) db.find(pathCriteria, searchOptions).toArray(callback);
+
+  else {
+
+    sortOptions = _this.parseFields(sortOptions);
+    db.find(pathCriteria, searchOptions).sort(sortOptions).toArray(callback);
+  }
 };
 
 DataMongoService.prototype.getPathCriteria = function(path){
@@ -309,11 +465,9 @@ DataMongoService.prototype.get = function (path, parameters, callback) {
 
     dbFields = _this.parseFields(dbFields);
 
-    var pathCriteria = _this.getPathCriteria(path);
-
     var searchOptions = {fields:dbFields};
 
-    _this.__doFind(pathCriteria, searchOptions, parameters.options.sort, function (e, items) {
+    _this.__doFind(path, searchOptions, parameters.options.sort, function (e, items) {
 
       if (e) return callback(e);
 
@@ -473,7 +627,7 @@ DataMongoService.prototype.__upsertInternal = function (path, setData, options, 
 
   if (setData._meta && setData._meta.modifiedBy) setParameters.$set.modifiedBy = setData._meta.modifiedBy;
 
-  _this.db.findAndModify({"path": path}, null, setParameters, {upsert: true, "new": true}, function (err, response) {
+  _this.db(path).findAndModify({"path": path}, null, setParameters, {upsert: true, "new": true}, function (err, response) {
 
     if (err) {
       //data with circular references can cause callstack exceeded errors
@@ -490,7 +644,7 @@ DataMongoService.prototype.__upsertInternal = function (path, setData, options, 
 DataMongoService.prototype.remove = function (path, options, callback) {
   var criteria = {'path': path};
 
-  this.db.remove(this.getPathCriteria(path), {multi: true}, function (err, removed) {
+  this.db(path).remove(this.getPathCriteria(path), {multi: true}, function (err, removed) {
 
     if (err) return callback(err);
 
@@ -505,14 +659,6 @@ DataMongoService.prototype.remove = function (path, options, callback) {
     });
   });
 
-};
-
-DataMongoService.prototype.addDataStoreFilter = function (pattern, datastoreKey) {
-  this.log.warn('addDataStoreFilter not implemented');
-};
-
-DataMongoService.prototype.removeDataStoreFilter = function (pattern) {
-  this.log.warn('removeDataStoreFilter not implemented');
 };
 
 DataMongoService.prototype.compact = function (dataStoreKey, callback) {

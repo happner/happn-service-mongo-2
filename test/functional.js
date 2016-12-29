@@ -15,7 +15,27 @@ describe('happn-service-mongo functional tests', function() {
 
   before('should initialize the service', function(callback) {
 
-    serviceInstance.initialize(config, callback);
+    serviceInstance.initialize(config, function(e){
+
+      if (e) return callback(e);
+
+      serviceInstance.happn = {
+        services:{
+          utils:{
+            wildcardMatch:function (pattern, matchTo) {
+
+              var regex = new RegExp(pattern.replace(/[*]/g, '.*'));
+              var matchResult = matchTo.match(regex);
+
+              if (matchResult) return true;
+              return false;
+            }
+          }
+        }
+      };
+
+      callback();
+    });
   });
 
   after(function(done) {
