@@ -24,6 +24,12 @@ function DataMongoService(opts) {
   this.log.$$TRACE('construct(%j)', opts);
 }
 
+DataMongoService.prototype.UPSERT_TYPE = {
+  upsert:0,
+  update:1,
+  insert:2
+};
+
 DataMongoService.prototype.stop = function (options, callback) {
 
   if (typeof options === 'function')
@@ -99,7 +105,7 @@ DataMongoService.prototype.doNoStore = Promise.promisify(function(message, callb
   return callback(null, message);
 });
 
-DataMongoService.prototype.getDBConnectionOpts = function(connUrl, collection){
+DataMongoService.prototype.getDBConnectionOpts = function(connUrl, databaseName, collectionName){
 
   var urlParts = url.parse(connUrl);
 
@@ -111,13 +117,18 @@ DataMongoService.prototype.getDBConnectionOpts = function(connUrl, collection){
 
     if (pathParts.length == 2 && pathParts[1] != ''){
       //we have a collection in the url
+
       config.url = urlParts.protocol + '//' + urlParts.host;
-      config.collection = pathParts[1];
+      config.databaseName = pathParts[1];
+
     }
   } else config.url = connUrl;
 
-  //override
-  if (collection) config.collection = collection;
+  //defaults
+
+  if (databaseName && !config.database) config.database = databaseName;
+
+  if (collectionName && !config.collection) config.collection = collectionName;
 
   return config;
 };
@@ -134,27 +145,33 @@ DataMongoService.prototype.initialize = function (config, callback) {
 
   _this.ObjectID = Datastore.ObjectID;
 
+  if (!_this.config.database) _this.config.database = 'happn';
+
+  if (!_this.config.collection) _this.config.collection = 'happn';
+
   if (!_this.config.url) _this.config.url = 'mongodb://127.0.0.1:27017';
 
   else {
 
-    var defaultOpts = _this.getDBConnectionOpts(_this.config.url, _this.config.collection);
+    var defaultOpts = _this.getDBConnectionOpts(_this.config.url, _this.config.database, _this.config.collection);
 
     _this.config.url = defaultOpts.url;
     _this.config.collection = defaultOpts.collection;
   }
 
-  if (!_this.config.collection) _this.config.collection = 'happn';
+  if (!_this.config.datastores || _this.config.datastores.length == 0) {
 
-  if (!config.datastores || config.datastores.length == 0) {
+    _this.config.datastores = [{
 
-    config.datastores = [{
       name:'default',
       url:_this.config.url,
+      database:_this.config.database,
       collection:_this.config.collection
     },{
+
       name:'system',
       url:_this.config.url,
+      database:_this.config.database,
       collection:'happn-system',
       patterns:['/_SYSTEM/*']
 
@@ -174,18 +191,15 @@ DataMongoService.prototype.initialize = function (config, callback) {
 
     dataStorePos++;
 
-    if (!datastoreConfig.collection) datastoreConfig.collection = datastoreConfig.name;
-
     if (!datastoreConfig.url) datastoreConfig.url = _this.config.url;
 
-    else {
+    var datastoreOpts = _this.getDBConnectionOpts(datastoreConfig.url, _this.config.database, datastoreConfig.name);
 
-      var datastoreOpts = _this.getDBConnectionOpts(datastoreConfig.url, datastoreConfig.collection);
+    datastoreConfig.url = datastoreOpts.url;
 
-      datastoreConfig.url = datastoreOpts.url;
-      datastoreConfig.collection = datastoreOpts.collection;
+    datastoreConfig.database = datastoreOpts.database;
 
-    }
+    datastoreConfig.collection = datastoreOpts.collection;
 
     _this.datastores[datastoreConfig.name] = {};
 
@@ -206,9 +220,7 @@ DataMongoService.prototype.initialize = function (config, callback) {
     //forces the default datastore
     if (datastoreConfig.isDefault) _this.defaultDatastore = datastoreConfig.name;
 
-    console.log('ds filter:::', datastoreConfig.url + '/' + datastoreConfig.collection);
-
-    MongoClient.connect (datastoreConfig.url + '/' + datastoreConfig.collection, datastoreConfig.opts, function (err, db) {
+    MongoClient.connect (datastoreConfig.url + '/' + datastoreConfig.database, datastoreConfig.opts, function (err, db) {
 
       if (err) datastoreCallback(err);
 
@@ -219,6 +231,7 @@ DataMongoService.prototype.initialize = function (config, callback) {
           if (!e) {
 
             _this.datastores[datastoreConfig.name].config = datastoreConfig;
+
             _this.datastores[datastoreConfig.name].db = db.collection(datastoreConfig.collection);
 
             datastoreCallback();
@@ -234,11 +247,10 @@ DataMongoService.prototype.initialize = function (config, callback) {
 
     _this.db = function (path) {
 
-      for (var dataStoreRoute in _this.dataroutes) if (_this.happn.services.utils.wildcardMatch(dataStoreRoute, path)) return _this.dataroutes[dataStoreRoute].db;
+      for (var dataStoreRoute in _this.dataroutes) if (_this.happn.services.utils.wildcardMatch(dataStoreRoute, path)) {
 
-      console.log('laoding default ds:::');
-      console.log(_this.defaultDatastore);
-      console.log(_this.datastores);
+        return _this.dataroutes[dataStoreRoute].db;
+      }
 
       return _this.datastores[_this.defaultDatastore].db;
     };
@@ -388,7 +400,10 @@ DataMongoService.prototype.parseFields = function (fields) {
 
 DataMongoService.prototype.filter = function(criteria, data, callback){
 
-  if (!criteria) return callback(null, data);
+  if (!criteria) {
+
+    return callback(null, data);
+  }
 
   try{
 
@@ -420,17 +435,29 @@ DataMongoService.prototype.__doFind = function(path, searchOptions, sortOptions,
 
 DataMongoService.prototype.getPathCriteria = function(path){
 
-  var dbCriteria = {$and: []};
+  // var dbCriteria = {$and: []};
+  //
+  // var returnType = path.indexOf('*'); //0,1 == array -1 == single
+  //
+  // if (returnType == 0) dbCriteria.$and.push({'path': {$regex: new RegExp(path.replace(/[*]/g, '.*'))}});//keys with any prefix ie. */joe/bloggs
+  //
+  // else if (returnType > 0) dbCriteria.$and.push({'path': {$regex: new RegExp('^' + path.replace(/[*]/g, '.*'))}});//keys that start with something but any suffix /joe/*/bloggs/*
+  //
+  // else dbCriteria.$and.push({'path': path}); //precise match
+  //
+  // return dbCriteria;
+
+  //we are not using any criteria but path here
+
+  //var dbCriteria = {$and: []};
 
   var returnType = path.indexOf('*'); //0,1 == array -1 == single
 
-  if (returnType == 0) dbCriteria.$and.push({'path': {$regex: new RegExp(path.replace(/[*]/g, '.*'))}});//keys with any prefix ie. */joe/bloggs
+  if (returnType == 0) return {'path': {$regex: new RegExp(path.replace(/[*]/g, '.*'))}};//keys with any prefix ie. */joe/bloggs
 
-  else if (returnType > 0) dbCriteria.$and.push({'path': {$regex: new RegExp('^' + path.replace(/[*]/g, '.*'))}});//keys that start with something but any suffix /joe/*/bloggs/*
+  else if (returnType > 0) return {'path': {$regex: new RegExp('^' + path.replace(/[*]/g, '.*'))}};//keys that start with something but any suffix /joe/*/bloggs/*
 
-  else dbCriteria.$and.push({'path': path}); //precise match
-
-  return dbCriteria;
+  else return {'path': path}; //precise match
 };
 
 DataMongoService.prototype.get = function (path, parameters, callback) {
@@ -514,7 +541,7 @@ DataMongoService.prototype.upsert = function (path, data, options, callback) {
     //appends an item with a path that matches the message path - but made unique by a shortid at the end of the path
     if (!_s.endsWith(path, '/')) path += '/';
 
-    path += _this.randomId();;
+    path += _this.randomId();
   }
 
   var setData = _this.formatSetData(path, data);
@@ -533,7 +560,10 @@ DataMongoService.prototype.upsert = function (path, data, options, callback) {
 
       if (e) return callback(e);
 
-      if (!previous) return _this.__upsertInternal(path, setData, options, true, callback);
+      if (!previous) {
+        options.upsertType = 2;//just inserting
+        return _this.__upsertInternal(path, setData, options, true, callback);
+      }
 
       for (var propertyName in previous.data)
         if (setData.data[propertyName] == null)
@@ -542,6 +572,8 @@ DataMongoService.prototype.upsert = function (path, data, options, callback) {
       setData.created = previous.created;
       setData.modified = Date.now();
       setData._id = previous._id;
+
+      options.updateType = 1;//updating
 
       _this.__upsertInternal(path, setData, options, true, callback);
     });
@@ -627,18 +659,47 @@ DataMongoService.prototype.__upsertInternal = function (path, setData, options, 
 
   if (setData._meta && setData._meta.modifiedBy) setParameters.$set.modifiedBy = setData._meta.modifiedBy;
 
-  _this.db(path).findAndModify({"path": path}, null, setParameters, {upsert: true, "new": true}, function (err, response) {
+  if (options.upsertType === _this.UPSERT_TYPE.insert){
+    //cheapest, but may break if duplicates found
+    _this.db(path).insert(setParameters.$set, {}, function (err, response) {
 
-    if (err) {
-      //data with circular references can cause callstack exceeded errors
-      if (err.toString() == 'RangeError: Maximum call stack size exceeded') return callback(new Error('callstack exceeded: possible circular data in happn set method'));
+      if (err) return callback(err);
 
-      return callback(err);
-    }
+      callback(null, _this.transform(response.ops[0]));
 
-    callback(null, _this.transform(response.value));
+    }.bind(_this));
+  } else if (options.upsertType === _this.UPSERT_TYPE.update){
+    //updating and matching to a doc
+    _this.db(path).update({"path": path}, setParameters, {upsert: true}, function (err, response) {
 
-  }.bind(_this));
+      if (err) return callback(err);
+
+      callback(null, _this.transform(setParameters.$set));
+
+    }.bind(_this));
+  } else {
+    //default - as previous a findAndModify - costly
+    _this.db(path).findAndModify({"path": path}, null, setParameters, {upsert: true, "new": true}, function (err, response) {
+
+      if (err) return callback(err);
+
+      callback(null, _this.transform(response.value));
+    });
+  }
+
+  // //_this.db(path).findAndModify({"path": path}, null, setParameters, {upsert: true, "new": true}, function (err, response) {
+  // _this.db(path).update({"path": path}, setParameters, {upsert: true, "new": true}, function (err, response) {
+  //
+  //   if (err) {
+  //     //data with circular references can cause callstack exceeded errors
+  //     if (err.toString() == 'RangeError: Maximum call stack size exceeded') return callback(new Error('callstack exceeded: possible circular data in happn set method'));
+  //
+  //     return callback(err);
+  //   }
+  //
+  //   callback(null, _this.transform(setParameters.$set));
+  //
+  // }.bind(_this));
 };
 
 DataMongoService.prototype.remove = function (path, options, callback) {

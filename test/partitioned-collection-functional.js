@@ -8,19 +8,21 @@ describe('happn-service-mongo functional tests', function() {
 
   var serviceInstance = new service();
 
-  var testId = require('shortid').generate();
-
   var async = require('async');
 
   var config = {
 
     url:'mongodb://127.0.0.1:27017',
 
+    database:'partitioned-collection-functional-db',
+
+    collection:'partitioned-collection-functional-coll',
+
     datastores: [
       {
         name: 'default',
         isDefault: true,
-        collection:'mongo-partitioned-test-default'
+        database:'mongo-partitioned-test-default'
       },
       {
         name: 'test4',
@@ -115,11 +117,41 @@ describe('happn-service-mongo functional tests', function() {
 
     async.eachSeries([0,1,2,3,4], function(counter, eachCB){
 
-      serviceInstance.upsert('/test1/' + counter.toString(), {"test":counter}, {}, function(e){
+      serviceInstance.upsert('/test1/' + counter.toString(), {"test":counter}, {}, eachCB);
+
+    }, function(e){
+
+      if (e) return callback(e);
+
+      MongoClient.connect(config.url + '/mongo-partitioned-test-test1', {}, function (e, db) {
 
         if (e) return callback(e);
 
-        serviceInstance.upsert('/blah/' + counter.toString(), {"test":counter}, {}, function(e){
+        db.collection('mongo-partitioned-test-test1')
+
+          .find()
+
+          .toArray(function(e, items){
+
+          if (e) return callback(e);
+
+          expect(items.length).to.be(5);
+
+          callback();
+        });
+      });
+    });
+  });
+
+  it('test2_3', function(callback) {
+
+    async.eachSeries([0,1,2,3,4], function(counter, eachCB){
+
+      serviceInstance.upsert('/test2/' + counter.toString(), {"test":counter}, {}, function(e){
+
+        if (e) return callback(e);
+
+        serviceInstance.upsert('/test3/' + counter.toString(), {"test":counter}, {}, function(e){
 
           if (e) return callback(e);
 
@@ -132,19 +164,77 @@ describe('happn-service-mongo functional tests', function() {
 
       if (e) return callback(e);
 
-      MongoClient.connect(config.url + '/mongo-partitioned-test-test1', {}, function (e, db) {
+      MongoClient.connect(config.url + '/mongo-partitioned-test-test2_3', {}, function (e, db) {
 
         if (e) return callback(e);
 
-        db.find()
+        db.collection('mongo-partitioned-test-test2_3')
+
+          .find()
+
           .toArray(function(e, items){
+
+            if (e) return callback(e);
+
+            expect(items.length).to.be(10);
+
+            callback();
+          });
+      });
+    });
+  });
+
+  it('test4', function(callback) {
+
+    async.eachSeries([0,1,2,3,4], function(counter, eachCB){
+
+      serviceInstance.upsert('/test4/test', {"test":counter}, {}, function(e){
+
+        if (e) return callback(e);
+
+        serviceInstance.upsert('/blahblah/' + counter.toString(), {"test":counter}, {}, function(e){
 
           if (e) return callback(e);
 
-          expect(items.length).to.be(5);
+          eachCB();
 
-          callback();
         });
+      });
+
+    }, function(e){
+
+      if (e) return callback(e);
+
+      MongoClient.connect(config.url + '/mongo-partitioned-test-test4', {}, function (e, db) {
+
+        if (e) return callback(e);
+
+        db.collection('mongo-partitioned-test-test4')
+
+          .find()
+
+          .toArray(function(e, items){
+
+            if (e) return callback(e);
+
+            expect(items.length).to.be(1);
+
+            MongoClient.connect(config.url + '/mongo-partitioned-test-default', {}, function (e, db) {
+
+              db.collection('mongo-partitioned-test-default')
+
+                .find()
+
+                .toArray(function(e, items){
+
+                  if (e) return callback(e);
+
+                  expect(items.length).to.be(5);
+
+                  callback();
+                });
+            });
+          });
       });
     });
   });

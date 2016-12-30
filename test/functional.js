@@ -358,26 +358,6 @@ describe('happn-service-mongo functional tests', function() {
     }
   });
 
-  it('runs unimplemented methods', function (callback) {
-
-    serviceInstance.addDataStoreFilter('test', 'test');
-
-    serviceInstance.removeDataStoreFilter('test');
-
-    serviceInstance.compact('test', function(e){
-
-      if (e) return callback(e);
-
-      serviceInstance.startCompacting('test', 3000, function(e){
-
-        if (e) return callback(e);
-
-        serviceInstance.stopCompacting('test', callback)
-
-      });
-    });
-  });
-
   it('does a sort and limit', function(done){
 
     var itemCount = 100;
