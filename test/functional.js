@@ -28,6 +28,7 @@ describe('happn-service-mongo functional tests', function() {
               var matchResult = matchTo.match(regex);
 
               if (matchResult) return true;
+
               return false;
             }
           }
