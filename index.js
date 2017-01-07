@@ -7,8 +7,6 @@ var _s = require('underscore.string')
   , async = require('async')
 ;
 
-module.exports = DataMongoService;
-
 function DataMongoService(opts) {
 
   var Logger;
@@ -109,8 +107,6 @@ DataMongoService.prototype.initialize = function (config, callback) {
 
   var _this = this;
 
-  console.log('DOING INIT:::');
-
   var ConfigManager = require('./lib/config');
 
   var configManager = new ConfigManager();
@@ -181,7 +177,6 @@ DataMongoService.prototype.initialize = function (config, callback) {
       return _this.datastores[_this.defaultDatastore].db;
     };
 
-    console.log('CALLING BACK:::');
     callback();
 
   });
@@ -622,4 +617,7 @@ DataMongoService.prototype.stopCompacting = function (dataStoreKey, callback) {
   this.log.warn('stopCompacting not implemented');
   callback();
 };
+
+module.exports = DataMongoService;
+
 //stopCompacting
