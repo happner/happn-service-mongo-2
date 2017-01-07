@@ -109,6 +109,8 @@ DataMongoService.prototype.initialize = function (config, callback) {
 
   var _this = this;
 
+  console.log('DOING INIT:::');
+
   var ConfigManager = require('./lib/config');
 
   var configManager = new ConfigManager();
@@ -179,6 +181,7 @@ DataMongoService.prototype.initialize = function (config, callback) {
       return _this.datastores[_this.defaultDatastore].db;
     };
 
+    console.log('CALLING BACK:::');
     callback();
 
   });
@@ -559,7 +562,7 @@ DataMongoService.prototype.__upsertInternal = function (path, setData, options, 
 
   if (options.upsertType === _this.UPSERT_TYPE.insert)
     //cheapest, but may break if duplicates found
-    return _this.db(path).insert(setParameters.$set, function (err, response) {
+    return _this.db(path).insert(setParameters.$set, options, function (err, response) {
 
       if (err) return callback(err);
 
@@ -569,7 +572,7 @@ DataMongoService.prototype.__upsertInternal = function (path, setData, options, 
 
   if (options.upsertType === _this.UPSERT_TYPE.update)
     //updating and matching to a doc
-    return _this.db(path).update({"path": path}, setParameters, function (err) {
+    return _this.db(path).update({"path": path}, setParameters, options, function (err) {
 
       if (err) return callback(err);
 
