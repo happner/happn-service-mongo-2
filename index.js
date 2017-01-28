@@ -81,7 +81,6 @@ DataMongoService.prototype.doStore = Promise.promisify(function(message, callbac
 
 DataMongoService.prototype.doSecureStore = Promise.promisify(function(message, callback){
 
-
   if (!message.request.options) message.request.options = {};
 
   message.request.options.modifiedBy = message.session.user.username;
@@ -333,8 +332,7 @@ DataMongoService.prototype.filter = function(criteria, data, callback){
 DataMongoService.prototype.__doFind = function(path, searchOptions, sortOptions, callback){
 
   if (!sortOptions) return this.db(path)
-    .find(this.getPathCriteria(path), searchOptions)
-    .toArray(callback);
+    .find(this.getPathCriteria(path), searchOptions, sortOptions, callback);
 
   this.db(path)
     .find(this.getPathCriteria(path), searchOptions)
@@ -580,7 +578,7 @@ DataMongoService.prototype.__upsertInternal = function (path, setData, options, 
 
     if (err) return callback(err);
 
-    callback(null, _this.transform(response.value));
+    callback(null, _this.transform(response));
   });
 };
 
