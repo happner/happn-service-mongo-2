@@ -120,7 +120,7 @@ describe('happn-service-mongo functional tests', function() {
 
   });
 
-  xit('merges data', function(callback) {
+  it('merges data', function(callback) {
 
     var initialCreated;
 
@@ -152,7 +152,7 @@ describe('happn-service-mongo functional tests', function() {
     });
   });
 
-  xit('tags data', function(callback) {
+  it('tags data', function(callback) {
 
     var tag = require("shortid").generate();
 
@@ -175,7 +175,7 @@ describe('happn-service-mongo functional tests', function() {
     });
   });
 
-  xit('removes data', function(callback) {
+  it('removes data', function(callback) {
 
     serviceInstance.upsert('/remove/' + testId, {"test":"data"}, {}, function(e, response){
 
@@ -194,7 +194,7 @@ describe('happn-service-mongo functional tests', function() {
     });
   });
 
-  xit('removes multiple data', function(callback) {
+  it('removes multiple data', function(callback) {
 
     serviceInstance.upsert('/remove/multiple/1/' + testId, {"test":"data"}, {}, function(e, response){
 
@@ -209,6 +209,8 @@ describe('happn-service-mongo functional tests', function() {
           if (e) return callback(e);
 
           expect(response._meta.path).to.equal('/remove/multiple/*');
+
+          console.log('AND VE REMOVED:::', response.data.removed);
           expect(response.data.removed).to.equal(2);
 
           callback();
@@ -218,7 +220,7 @@ describe('happn-service-mongo functional tests', function() {
     });
   });
 
-  xit('gets data with wildcard', function(callback) {
+  it('gets data with wildcard', function(callback) {
 
     serviceInstance.upsert('/get/multiple/1/' + testId, {"test":"data"}, {}, function(e, response){
 
@@ -229,6 +231,8 @@ describe('happn-service-mongo functional tests', function() {
         if (e) return callback(e);
 
         serviceInstance.get('/get/multiple/*/' + testId, {}, function(e, response){
+
+          console.log('AND ZE LENGTH IS:::', response.length);
 
           expect(response.length).to.equal(2);
           expect(response[0].data.test).to.equal('data');
@@ -243,7 +247,7 @@ describe('happn-service-mongo functional tests', function() {
     });
   });
 
-  xit('gets data with complex search', function(callback) {
+  it('gets data with complex search', function(callback) {
 
     var test_path_end = require('shortid').generate();
 
@@ -278,25 +282,30 @@ describe('happn-service-mongo functional tests', function() {
 
     serviceInstance.upsert('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex/' + test_path_end, complex_obj, null, function (e, put_result) {
 
-      expect(e == null).to.be(true);
+      if (e) return callback(e);
+
       serviceInstance.upsert('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex/' + test_path_end + '/1', complex_obj, null, function (e, put_result) {
-        expect(e == null).to.be(true);
+
+        if (e) return callback(e);
 
         serviceInstance.upsert('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex/' + test_path_end + '/2', {"test":"data"}, null, function (e, put_result) {
-          expect(e == null).to.be(true);
+
+          if (e) return callback(e);
 
           serviceInstance.get('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex*', {
             criteria: criteria1,
             options: options1
           }, function (e, search_result) {
 
-            expect(e == null).to.be(true);
+            if (e) return callback(e);
+
             expect(search_result.length == 1).to.be(true);
 
             serviceInstance.get('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex*', {
               criteria: criteria2,
               options: options2
             }, function (e, search_result) {
+
               expect(e == null).to.be(true);
               expect(search_result.length == 2).to.be(true);
               callback(e);
@@ -307,7 +316,7 @@ describe('happn-service-mongo functional tests', function() {
     });
   });
 
-  xit('gets data with $not', function(done) {
+  it('gets data with $not', function(done) {
 
     var test_obj = {
       data:'ok'
@@ -343,9 +352,10 @@ describe('happn-service-mongo functional tests', function() {
 
   });
 
-  xit('sets value data', function (callback) {
+  it('sets value data', function (callback) {
 
     try {
+
       var test_string = require('shortid').generate();
       var test_base_url = '/a1_eventemitter_embedded_datatypes/' + testId + '/set/string/' + test_string;
 
@@ -373,7 +383,7 @@ describe('happn-service-mongo functional tests', function() {
     }
   });
 
-  xit('does a sort and limit', function(done){
+  it('does a sort and limit', function(done){
 
     var itemCount = 100;
 

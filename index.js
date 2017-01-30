@@ -242,7 +242,7 @@ DataMongoService.prototype.insertTag = function(snapshotData, tag, path, callbac
     path: tagPath
   };
 
-  this.__upsertInternal(tagPath, tagData, {upsertType:this.UPSERT_TYPE.insert}, false, callback);
+  this.__upsertInternal(tagPath, tagData, {upsertType:this.UPSERT_TYPE.insert, noCache:true}, false, callback);
 
 };
 
@@ -331,13 +331,13 @@ DataMongoService.prototype.filter = function(criteria, data, callback){
 
 DataMongoService.prototype.__doFind = function(path, searchOptions, sortOptions, callback){
 
-  if (!sortOptions) return this.db(path)
-    .find(this.getPathCriteria(path), searchOptions, sortOptions, callback);
+  var _this = this;
 
-  this.db(path)
-    .find(this.getPathCriteria(path), searchOptions)
-    .sort(this.parseFields(sortOptions))
-    .toArray(callback);
+  if (!sortOptions) return _this.db(path)
+    .find(_this.getPathCriteria(path), searchOptions, null, callback);
+
+  _this.db(path)
+    .find(_this.getPathCriteria(path), searchOptions, _this.parseFields(sortOptions), callback);
 
 };
 
@@ -553,7 +553,7 @@ DataMongoService.prototype.__upsertInternal = function (path, setData, options, 
 
   if (setData._meta && setData._meta.modifiedBy) setParameters.$set.modifiedBy = setData._meta.modifiedBy;
 
-  if (options.upsertType === _this.UPSERT_TYPE.insert)
+  if (options.upsertType === _this.UPSERT_TYPE.insert){
     //cheapest, but may break if duplicates found
     return _this.db(path).insert(setParameters.$set, options, function (err, response) {
 
@@ -562,8 +562,9 @@ DataMongoService.prototype.__upsertInternal = function (path, setData, options, 
       callback(null, _this.transform(response.ops[0]));
 
     });
+  }
 
-  if (options.upsertType === _this.UPSERT_TYPE.update)
+  if (options.upsertType === _this.UPSERT_TYPE.update){
     //updating and matching to a doc
     return _this.db(path).update({"path": path}, setParameters, options, function (err) {
 
@@ -572,6 +573,7 @@ DataMongoService.prototype.__upsertInternal = function (path, setData, options, 
       callback(null, _this.transform(setParameters.$set));
 
     });
+  }
 
   //default - as previous a findAndModify - costly
   _this.db(path).findAndModify({"path": path}, setParameters, function (err, response) {
