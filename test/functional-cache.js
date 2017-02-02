@@ -209,8 +209,6 @@ describe('happn-service-mongo functional tests', function() {
           if (e) return callback(e);
 
           expect(response._meta.path).to.equal('/remove/multiple/*');
-
-          console.log('AND VE REMOVED:::', response.data.removed);
           expect(response.data.removed).to.equal(2);
 
           callback();
@@ -231,8 +229,6 @@ describe('happn-service-mongo functional tests', function() {
         if (e) return callback(e);
 
         serviceInstance.get('/get/multiple/*/' + testId, {}, function(e, response){
-
-          console.log('AND ZE LENGTH IS:::', response.length);
 
           expect(response.length).to.equal(2);
           expect(response[0].data.test).to.equal('data');

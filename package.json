@@ -37,7 +37,8 @@
     "istanbul": "^0.4.1",
     "mocha": "*",
     "shortid": "^2.2.4",
-    "happn-tests-2": "latest"
+    "happn-tests-2": "latest",
+    "commander":"^2.9.0"
   },
   "readmeFilename": "README.md"
 }

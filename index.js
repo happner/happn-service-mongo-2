@@ -574,8 +574,8 @@ DataMongoService.prototype.__upsertInternal = function (path, setData, options, 
 
     });
   }
-
   //default - as previous a findAndModify - costly
+
   _this.db(path).findAndModify({"path": path}, setParameters, function (err, response) {
 
     if (err) return callback(err);
