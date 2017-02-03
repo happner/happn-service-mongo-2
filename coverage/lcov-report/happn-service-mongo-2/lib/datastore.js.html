@@ -1,0 +1,1229 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for happn-service-mongo-2/lib/datastore.js</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../prettify.css" />
+    <link rel="stylesheet" href="../../base.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class='wrapper'>
+  <div class='pad1'>
+    <h1>
+      <a href="../../index.html">all files</a> / <a href="index.html">happn-service-mongo-2/lib/</a> datastore.js
+    </h1>
+    <div class='clearfix'>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">59.28% </span>
+        <span class="quiet">Statements</span>
+        <span class='fraction'>115/194</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">50% </span>
+        <span class="quiet">Branches</span>
+        <span class='fraction'>49/98</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">66.67% </span>
+        <span class="quiet">Functions</span>
+        <span class='fraction'>30/45</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">66.67% </span>
+        <span class="quiet">Lines</span>
+        <span class='fraction'>104/156</span>
+      </div>
+    </div>
+  </div>
+  <div class='status-line medium'></div>
+<pre><table class="coverage">
+<tr><td class="line-count quiet">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272
+273
+274
+275
+276
+277
+278
+279
+280
+281
+282
+283
+284
+285
+286
+287
+288
+289
+290
+291
+292
+293
+294
+295
+296
+297
+298
+299
+300
+301
+302
+303
+304
+305
+306
+307
+308
+309
+310
+311
+312
+313
+314
+315
+316
+317
+318
+319
+320
+321
+322
+323
+324
+325
+326
+327
+328
+329
+330
+331
+332
+333
+334
+335
+336
+337
+338
+339
+340
+341
+342
+343
+344
+345
+346
+347
+348
+349
+350
+351
+352
+353
+354
+355
+356
+357
+358
+359
+360
+361
+362
+363
+364
+365
+366
+367
+368
+369
+370
+371
+372
+373
+374
+375
+376
+377
+378
+379
+380
+381
+382
+383
+384
+385
+386
+387
+388
+389</td><td class="line-coverage quiet"><span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">126×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">126×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">126×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">126×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-yes">14×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">51×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">336×</span>
+<span class="cline-any cline-yes">335×</span>
+<span class="cline-any cline-yes">335×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">var mongodb = require('mongodb')
+  ,  mongoclient = mongodb.MongoClient
+  ,  async = require('async')
+;
+&nbsp;
+function DataStore (config){
+&nbsp;
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (!config.name) <span class="cstat-no" title="statement not covered" >throw new Error('invalid configuration: data store must have a name');</span>
+&nbsp;
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (!config.database) <span class="cstat-no" title="statement not covered" >config.database = 'happn';</span>
+&nbsp;
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (!config.collection) <span class="cstat-no" title="statement not covered" >config.collection = 'happn';</span>
+&nbsp;
+  <span class="missing-if-branch" title="else path not taken" >E</span>if (!config.policy) config.policy = {};
+&nbsp;
+  if (config.cache) {
+&nbsp;
+    if (config.cache === true) config.cache = {};
+&nbsp;
+    if (!config.cache.cacheId) config.cache.cacheId = config.name;
+  }
+&nbsp;
+  Object.defineProperty(this, 'config', {value:config});
+}
+&nbsp;
+DataStore.prototype.ObjectID =  mongodb.ObjectID;
+&nbsp;
+DataStore.prototype.setUpCache = function(callback){
+&nbsp;
+  var _this = this;
+&nbsp;
+  var Cache = require('redis-lru-cache');
+&nbsp;
+  var cache = new  Cache(_this.config.cache);
+&nbsp;
+  Object.defineProperty(this, 'cache', {value:cache});
+&nbsp;
+  _this.__oldFind = _this.find;
+&nbsp;
+  _this.find = function(criteria, searchOptions, sortOptions, callback){
+&nbsp;
+    if (criteria.path.indexOf &amp;&amp; criteria.path.indexOf('*') == -1){
+&nbsp;
+      return _this.cache.get(criteria.path, function(e, item){
+&nbsp;
+        <span class="missing-if-branch" title="if path not taken" >I</span>if (e) <span class="cstat-no" title="statement not covered" >return callback(e);</span>
+&nbsp;
+        if (item) return callback(null, [item]);
+&nbsp;
+        _this.__oldFind(criteria, searchOptions, sortOptions, function(e, items){
+&nbsp;
+          <span class="missing-if-branch" title="if path not taken" >I</span>if (e) <span class="cstat-no" title="statement not covered" >return callback(e);</span>
+&nbsp;
+          <span class="missing-if-branch" title="else path not taken" >E</span>if (!items || items.length == 0) return callback(null, []);
+&nbsp;
+<span class="cstat-no" title="statement not covered" >          _this.cache.set(criteria.path, items[0], <span class="fstat-no" title="function not covered" >function(e){</span></span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >            return callback(e, items);</span>
+          });
+        });
+      });
+    }
+    return this.__oldFind(criteria, searchOptions, sortOptions, callback);
+  }.bind(this);
+&nbsp;
+  this.__oldFindOne = this.findOne;
+&nbsp;
+  _this.findOne = function(criteria, fields, callback){
+&nbsp;
+    _this.cache.get(criteria.path, function(e, item){
+&nbsp;
+      <span class="missing-if-branch" title="if path not taken" >I</span>if (e) <span class="cstat-no" title="statement not covered" >return callback(e);</span>
+      <span class="missing-if-branch" title="else path not taken" >E</span>if (item) return callback(null, item);
+&nbsp;
+<span class="cstat-no" title="statement not covered" >      _this.__oldFindOne(criteria, fields, <span class="fstat-no" title="function not covered" >function(e, item){</span></span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        if (e) <span class="cstat-no" title="statement not covered" >return callback(e);</span></span>
+<span class="cstat-no" title="statement not covered" >        if (!item) <span class="cstat-no" title="statement not covered" >return callback(null, null);</span></span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        _this.cache.set(criteria.path, item, <span class="fstat-no" title="function not covered" >function(e){</span></span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >          return callback(e, item);</span>
+        });
+      });
+    });
+&nbsp;
+  }.bind(this);
+&nbsp;
+  this.__oldFindAndModify = this.findAndModify;
+&nbsp;
+  this.findAndModify = function(criteria, data, callback){
+&nbsp;
+    //this is actually a set or update
+    _this.__oldFindAndModify(criteria, data, function(e, item){
+&nbsp;
+      <span class="missing-if-branch" title="if path not taken" >I</span>if (e) <span class="cstat-no" title="statement not covered" >return callback(e);</span>
+&nbsp;
+      <span class="missing-if-branch" title="else path not taken" >E</span>if (item) return _this.cache.set(criteria.path, item, function(e){
+&nbsp;
+        callback(e, item);
+      });
+&nbsp;
+<span class="cstat-no" title="statement not covered" >      callback(null, null);</span>
+    });
+  };
+&nbsp;
+  this.__oldRemove = this.remove;
+&nbsp;
+  this.remove = function(criteria, callback){
+&nbsp;
+    if (criteria.path.indexOf &amp;&amp; criteria.path.indexOf('*') == -1){
+&nbsp;
+      //its ok if the actual remove fails, as the cache will refresh
+      _this.cache.remove(criteria.path, function(e){
+&nbsp;
+        <span class="missing-if-branch" title="if path not taken" >I</span>if (e) <span class="cstat-no" title="statement not covered" >return callback(e);</span>
+&nbsp;
+        _this.__oldRemove(criteria, callback);
+      })
+&nbsp;
+    } else {
+&nbsp;
+      _this.find(criteria, {fields:{path:1}}, null, function(e, items){
+&nbsp;
+        <span class="missing-if-branch" title="if path not taken" >I</span>if (e) <span class="cstat-no" title="statement not covered" >return callback(e);</span>
+&nbsp;
+        //clear the items from the cache
+        async.eachSeries(items, function(item, itemCB){
+&nbsp;
+          _this.cache.remove(item.path, itemCB);
+&nbsp;
+        }, function(e){
+&nbsp;
+          <span class="missing-if-branch" title="if path not taken" >I</span>if (e) <span class="cstat-no" title="statement not covered" >return callback(e);</span>
+&nbsp;
+          _this.__oldRemove(criteria, callback);
+        });
+      });
+    }
+  };
+&nbsp;
+  _this.__oldInsert = _this.insert;
+&nbsp;
+  _this.insert = function(data, options, callback){
+&nbsp;
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (typeof options == 'function'){
+<span class="cstat-no" title="statement not covered" >      callback = options;</span>
+<span class="cstat-no" title="statement not covered" >      options = null;</span>
+    }
+&nbsp;
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (!options) <span class="cstat-no" title="statement not covered" >options = {};</span>
+&nbsp;
+    _this.__oldInsert(data, function(e, response){
+&nbsp;
+      <span class="missing-if-branch" title="if path not taken" >I</span>if (e) <span class="cstat-no" title="statement not covered" >return callback(e);</span>
+&nbsp;
+      <span class="missing-if-branch" title="else path not taken" >E</span>if (options.noCache) return callback(null, response);
+&nbsp;
+<span class="cstat-no" title="statement not covered" >      _this.cache.set(data.path, data, <span class="fstat-no" title="function not covered" >function(e){</span></span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        if (e) <span class="cstat-no" title="statement not covered" >return callback(e);</span></span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        return callback(null, response);</span>
+      });
+    });
+  };
+&nbsp;
+  this.__oldUpdate = this.update;
+&nbsp;
+  _this.update = <span class="fstat-no" title="function not covered" >function(criteria, data, options, callback){</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >    _this.__oldUpdate(criteria, data, options, <span class="fstat-no" title="function not covered" >function(e, response){</span></span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >      if (e) <span class="cstat-no" title="statement not covered" >return callback(e);</span></span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >      _this.cache.set(criteria.path, data, <span class="fstat-no" title="function not covered" >function(e){</span></span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        if (e) <span class="cstat-no" title="statement not covered" >return callback(e);</span></span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        return callback(null, response);</span>
+&nbsp;
+      });
+    });
+  };
+&nbsp;
+  callback();
+};
+&nbsp;
+DataStore.prototype.initialize = function(callback){
+&nbsp;
+  var _this = this;
+&nbsp;
+  mongoclient.connect (_this.config.url + '/' + _this.config.database, _this.config.opts, function (err, database) {
+&nbsp;
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (err) <span class="cstat-no" title="statement not covered" >return callback(err);</span>
+&nbsp;
+    var collection = database.collection(_this.config.collection);
+&nbsp;
+    var doCallback = function(){
+&nbsp;
+      Object.defineProperty(_this, 'data', {value:collection});
+&nbsp;
+      if (_this.config.cache) _this.setUpCache(callback);
+      else callback();
+    };
+&nbsp;
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (_this.config.index === false){
+&nbsp;
+<span class="cstat-no" title="statement not covered" >      console.warn('no index configured for datastore with collection: ' + _this.config.collection + ' this could result in duplicates, please make sure all data items have a unique "path" property');</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >      doCallback();</span>
+&nbsp;
+    } else {
+&nbsp;
+      <span class="missing-if-branch" title="else path not taken" >E</span>if (_this.config.index == null){
+        _this.config.index = {
+          "happn_path_index":{
+            fields:{path: 1},
+            options:{unique: true, w: 1}
+          }
+        };
+      }
+&nbsp;
+      //indexes are configurable, but we always use a default unique one on path, unless explicitly specified
+      async.eachSeries(Object.keys(_this.config.index), function(indexKey, indexCB){
+&nbsp;
+        var indexConfig = _this.config.index[indexKey];
+&nbsp;
+        collection.createIndex(indexKey, indexConfig.fields, indexConfig.options, indexCB);
+&nbsp;
+      }, function(e){
+&nbsp;
+        <span class="missing-if-branch" title="if path not taken" >I</span>if (e) <span class="cstat-no" title="statement not covered" >return callback(e);</span>
+&nbsp;
+        doCallback();
+&nbsp;
+      });
+    }
+  });
+};
+&nbsp;
+DataStore.prototype.findOne = function(criteria, fields, callback){
+&nbsp;
+  return this.data.findOne(criteria, fields, callback);
+};
+&nbsp;
+DataStore.prototype.find = function(criteria, searchOptions, sortOptions, callback){
+&nbsp;
+  if (!sortOptions) return this.data
+    .find(criteria, searchOptions).toArray(callback);
+&nbsp;
+  this.data
+    .find(criteria, searchOptions)
+    .sort(sortOptions)
+    .toArray(callback);
+};
+&nbsp;
+var batchData = {};
+&nbsp;
+<span class="fstat-no" title="function not covered" >function BatchDataItem(options, data){</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  this.options = options;</span>
+<span class="cstat-no" title="statement not covered" >  this.queued = [];</span>
+<span class="cstat-no" title="statement not covered" >  this.callbacks = [];</span>
+<span class="cstat-no" title="statement not covered" >  this.data = data;</span>
+&nbsp;
+}
+&nbsp;
+BatchDataItem.prototype.empty = <span class="fstat-no" title="function not covered" >function(){</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  clearTimeout(this.timeout);</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  var opIndex = 0;</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  var _this = this;</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  var emptyQueued = [];</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  var callbackQueued = [];</span>
+&nbsp;
+  //copy our insertion data to local scope
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  emptyQueued.push.apply(emptyQueued, this.queued);</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  callbackQueued.push.apply(callbackQueued, this.callbacks);</span>
+&nbsp;
+  //reset our queues
+<span class="cstat-no" title="statement not covered" >  this.queued = [];</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  this.callbacks = [];</span>
+&nbsp;
+  //insert everything in the queue then loop through the results
+<span class="cstat-no" title="statement not covered" >  _this.data.insert(emptyQueued, this.options, <span class="fstat-no" title="function not covered" >function(e, response){</span></span>
+&nbsp;
+    // do callbacks for all inserted items
+<span class="cstat-no" title="statement not covered" >    callbackQueued.forEach(<span class="fstat-no" title="function not covered" >function(cb){</span></span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >      if (e) <span class="cstat-no" title="statement not covered" >return cb.call(cb, e);</span></span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >      cb.call(cb, null, {ops:[response.ops[opIndex]]});</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >      opIndex++;</span>
+&nbsp;
+    });
+&nbsp;
+  }.bind(this));
+};
+&nbsp;
+BatchDataItem.prototype.insert = <span class="fstat-no" title="function not covered" >function(data, callback){</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  this.queued.push(data);</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  this.callbacks.push(callback);</span>
+&nbsp;
+  //epty the queue when we have reached our batch size
+<span class="cstat-no" title="statement not covered" >  if (this.queued.length &gt;= this.options.batchSize) <span class="cstat-no" title="statement not covered" >return this.empty();</span></span>
+&nbsp;
+  //as soon as something lands up in the queue we start up a timer to ensure it is emptied even when there is a drop in activity
+<span class="cstat-no" title="statement not covered" >  if (this.queued.length == 1) <span class="cstat-no" title="statement not covered" >this.initialize();/</span></span>/we start the timer now
+};
+&nbsp;
+BatchDataItem.prototype.initialize = <span class="fstat-no" title="function not covered" >function(){</span>
+&nbsp;
+  //empty our batch based on the timeout
+<span class="cstat-no" title="statement not covered" >  this.timeout = setTimeout(this.empty.bind(this), this.options.batchTimeout);</span>
+};
+&nbsp;
+DataStore.prototype.batchInsert = <span class="fstat-no" title="function not covered" >function(data, options, callback){</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  var _this = this;</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  options.batchTimeout = options.batchTimeout || 500;</span>
+&nbsp;
+  //keyed by our batch sizes
+<span class="cstat-no" title="statement not covered" >  if (!batchData[options.batchSize]) <span class="cstat-no" title="statement not covered" >batchData[options.batchSize] = new BatchDataItem(options, _this.data);</span></span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  batchData[options.batchSize].insert(data, callback);</span>
+&nbsp;
+};
+&nbsp;
+DataStore.prototype.insert = function(data, options, callback){
+&nbsp;
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (this.config.policy.set){
+<span class="cstat-no" title="statement not covered" >    for(var option in this.config.policy.set){</span>
+<span class="cstat-no" title="statement not covered" >      if (options[option] === undefined) <span class="cstat-no" title="statement not covered" >options[option] = this.config.policy.set[option];</span></span>
+    }
+  }
+&nbsp;
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (options.batchSize &gt; 0) <span class="cstat-no" title="statement not covered" >return this.batchInsert(data, options, callback);</span>
+&nbsp;
+  this.data.insert(data, options, callback);
+};
+&nbsp;
+DataStore.prototype.update = <span class="fstat-no" title="function not covered" >function(criteria, data, options, callback){</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  return this.data.update(criteria, data, {upsert: true}, callback);</span>
+};
+&nbsp;
+DataStore.prototype.findAndModify = function(criteria, data, callback){
+&nbsp;
+  return this.data.findAndModify(criteria, null, data, {upsert: true, "new": true}, function(e, item){
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (e) <span class="cstat-no" title="statement not covered" >return callback(e);</span>
+    <span class="missing-if-branch" title="else path not taken" >E</span>if (item) return callback(null, item.value);
+<span class="cstat-no" title="statement not covered" >    callback(null, null);</span>
+  });
+};
+&nbsp;
+DataStore.prototype.remove = function(criteria, callback){
+&nbsp;
+  return this.data.remove(criteria, {multi: true}, callback);
+};
+&nbsp;
+module.exports.create = function(config, callback){
+&nbsp;
+  try{
+&nbsp;
+    var store = new DataStore(config);
+&nbsp;
+    store.initialize(function(e){
+&nbsp;
+      <span class="missing-if-branch" title="if path not taken" >I</span>if (e) <span class="cstat-no" title="statement not covered" >return callback(e);</span>
+&nbsp;
+      callback(null, store);
+    });
+&nbsp;
+  }catch(e){
+<span class="cstat-no" title="statement not covered" >    callback(e);</span>
+  }
+};</pre></td></tr>
+</table></pre>
+<div class='push'></div><!-- for sticky footer -->
+</div><!-- /wrapper -->
+<div class='footer quiet pad2 space-top1 center small'>
+  Code coverage
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Fri Feb 03 2017 16:18:02 GMT+0200 (SAST)
+</div>
+</div>
+<script src="../../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../../sorter.js"></script>
+</body>
+</html>
