@@ -472,7 +472,7 @@ describe('happn-service-mongo functional tests', function() {
     );
   });
 
-  it.only('sets up a cached service, with the lru cache size set - then adds items - ensures our lru cache size is correct', function(done){
+  it('sets up a cached service, with the lru cache size set - then adds items - ensures our lru cache size is correct', function(done){
 
     var lru_set_config = {
       url:'mongodb://127.0.0.1:27017/happn',
@@ -526,8 +526,6 @@ describe('happn-service-mongo functional tests', function() {
       }, function(e){
 
         if (e) return done(e);
-
-        console.log('serviceInstance.db:::',serviceInstance.db('/test/push').cache);
 
         var lruCache = serviceInstance.db('/test/push')//get the default db
           .cache//reference to redis-lru from db
