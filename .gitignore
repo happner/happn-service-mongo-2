@@ -22,4 +22,6 @@ public/*
 .idea/
 .editorconfig
 
+coverage/*
+
 .DS_Store
