@@ -31,7 +31,6 @@ serviceInstance.initialize(config, function(e){
 			process.exit(0);
 		}
 	});
-
 });
 
 

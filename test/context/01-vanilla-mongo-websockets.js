@@ -5,6 +5,7 @@ module.exports = {
   happnDependancy:require('happn-3'),
   description:"eventemitter embedded functional tests",
   serviceConfig:{
+    __noDecouple:true,
     services: {
       data: {
         instance:TEST_GLOBALS.mongoService

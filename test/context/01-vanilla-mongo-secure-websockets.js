@@ -8,6 +8,7 @@ module.exports = {
   description:"eventemitter embedded functional tests",
 
   serviceConfig:{
+    __noDecouple:true,
     secure:true,
     services: {
       data: {

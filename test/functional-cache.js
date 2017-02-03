@@ -1,4 +1,4 @@
-describe('happn-service-mongo functional tests', function() {
+describe('happn-service-mongo functional tests with cache', function() {
 
   this.timeout(20000);
 
