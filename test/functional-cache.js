@@ -36,6 +36,7 @@ describe('happn-service-mongo functional tests', function() {
 
       if (e) return callback(e);
 
+      if (!serviceInstance.happn)
       serviceInstance.happn = {
         services:{
           utils:{
@@ -503,6 +504,7 @@ describe('happn-service-mongo functional tests', function() {
 
       if (e) return callback(e);
 
+      if (!serviceInstance.happn)
       serviceInstance.happn = {
         services:{
           utils:{
