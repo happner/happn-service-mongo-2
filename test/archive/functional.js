@@ -5,6 +5,7 @@ describe('happn-service-mongo functional tests', function() {
   var expect = require('expect.js');
 
   var service = require('../index');
+  var serviceInstance = new service();
 
   var testId = require('shortid').generate();
 
@@ -12,30 +13,28 @@ describe('happn-service-mongo functional tests', function() {
     url:'mongodb://127.0.0.1:27017/happn'
   };
 
-  var serviceInstance = new service(config);
-
   before('should initialize the service', function(callback) {
 
-    serviceInstance.initialize(function(e){
+    serviceInstance.initialize(config, function(e){
 
       if (e) return callback(e);
 
       if (!serviceInstance.happn)
-        serviceInstance.happn = {
-          services:{
-            utils:{
-              wildcardMatch:function (pattern, matchTo) {
+      serviceInstance.happn = {
+        services:{
+          utils:{
+            wildcardMatch:function (pattern, matchTo) {
 
-                var regex = new RegExp(pattern.replace(/[*]/g, '.*'));
-                var matchResult = matchTo.match(regex);
+              var regex = new RegExp(pattern.replace(/[*]/g, '.*'));
+              var matchResult = matchTo.match(regex);
 
-                if (matchResult) return true;
+              if (matchResult) return true;
 
-                return false;
-              }
+              return false;
             }
           }
-        };
+        }
+      };
 
       callback();
     });
@@ -51,36 +50,111 @@ describe('happn-service-mongo functional tests', function() {
     var beforeCreatedOrModified = Date.now();
 
     setTimeout(function(){
-      serviceInstance.upsert('/set/' + testId, {"data":{"test":"data"}}, {}, false, function(e, response, created, upsert, meta){
+
+      serviceInstance.upsert('/set/' + testId, {"test":"data"}, {}, function(e, response){
 
         if (e) return callback(e);
 
         expect(response.data.test).to.equal("data");
 
-        expect(meta.created > beforeCreatedOrModified).to.equal(true);
-
-        expect(meta.modified > beforeCreatedOrModified).to.equal(true);
+        expect(response._meta.created > beforeCreatedOrModified).to.equal(true);
+        expect(response._meta.modified > beforeCreatedOrModified).to.equal(true);
 
         callback();
 
       });
+
+
     }, 100);
 
   });
 
   it('gets data', function(callback) {
 
-    serviceInstance.upsert('/get/' + testId, {data:{"test":"data"}}, {}, false, function(e, response){
+     serviceInstance.upsert('/get/' + testId, {"test":"data"}, {}, function(e, response){
 
       if (e) return callback(e);
 
       expect(response.data.test).to.equal("data");
 
-      serviceInstance.find('/get/' + testId, {}, function(e, items){
+      serviceInstance.get('/get/' + testId, {}, function(e, response){
 
         if (e) return callback(e);
 
-        expect(items[0].data.test).to.be("data");
+        expect(response._meta.path).to.equal('/get/' + testId);
+        expect(response.data.test).to.equal("data");
+
+        callback();
+
+      });
+
+    });
+
+  });
+
+  it('gets no data', function(callback) {
+
+    var random = require('shortid').generate();
+
+    serviceInstance.get('/wontfind/' + random, {}, function(e, response){
+
+      if (e) return callback(e);
+
+      expect(response).to.equal(null);
+      callback();
+
+    });
+
+  });
+
+  it('merges data', function(callback) {
+
+    var initialCreated;
+
+    serviceInstance.upsert('/merge/' + testId, {"test":"data"}, {}, function(e, response){
+
+      if (e) return callback(e);
+
+      initialCreated = response._meta.created;
+
+      serviceInstance.upsert('/merge/' + testId, {"test1":"data1"}, {merge:true}, function(e, response){
+
+        if (e) return callback(e);
+
+        expect(response._meta.created).to.equal(initialCreated);
+
+        serviceInstance.get('/merge/' + testId, {}, function(e, response){
+
+          if (e) return callback(e);
+
+          expect(response.data.test).to.equal("data");
+          expect(response.data.test1).to.equal("data1");
+          expect(response._meta.created).to.equal(initialCreated);
+          expect(response._meta.modified > initialCreated).to.equal(true);
+
+          callback();
+
+        });
+      });
+    });
+  });
+
+  it('tags data', function(callback) {
+
+    var tag = require("shortid").generate();
+
+    serviceInstance.upsert('/tag/' + testId, {"test":"data"}, {}, function(e){
+
+      if (e) return callback(e);
+
+      serviceInstance.upsert('/tag/' + testId, null, {"tag":tag}, function(e, response){
+
+        if (e) return callback(e);
+
+        expect(response.data.data.test).to.equal('data');
+        expect(response.data._meta.path).to.equal('/tag/' + testId);
+        expect(response._meta.tag).to.equal(tag);
+        expect(response._meta.path.indexOf('/_TAGS' + '/tag/' + testId)).to.equal(0);
 
         callback();
 
@@ -88,28 +162,13 @@ describe('happn-service-mongo functional tests', function() {
     });
   });
 
-  it('gets no data', function(callback) {
-
-    var random = require('shortid').generate();
-
-    serviceInstance.find('/wontfind/' + random, {}, function(e, response){
-
-      if (e) return callback(e);
-
-      expect(response).to.eql([]);
-
-      callback();
-
-    });
-  });
-
   it('removes data', function(callback) {
 
-    serviceInstance.upsert('/remove/' + testId, {"test":"data"}, {}, false, function(e, response){
+     serviceInstance.upsert('/remove/' + testId, {"test":"data"}, {}, function(e, response){
 
       if (e) return callback(e);
 
-      serviceInstance.remove('/remove/' + testId, function(e, response){
+      serviceInstance.remove('/remove/' + testId, {}, function(e, response){
 
         if (e) return callback(e);
 
@@ -122,17 +181,17 @@ describe('happn-service-mongo functional tests', function() {
     });
   });
 
-  it('removes multiple data', function(callback) {
+   it('removes multiple data', function(callback) {
 
-    serviceInstance.upsert('/remove/multiple/1/' + testId, {"test":"data"}, {}, false, function(e, response){
+     serviceInstance.upsert('/remove/multiple/1/' + testId, {"test":"data"}, {}, function(e, response){
 
       if (e) return callback(e);
 
-      serviceInstance.upsert('/remove/multiple/2/' + testId, {"test":"data"}, {}, false, function(e, response){
+      serviceInstance.upsert('/remove/multiple/2/' + testId, {"test":"data"}, {}, function(e, response){
 
         if (e) return callback(e);
 
-        serviceInstance.remove('/remove/multiple/*', function(e, response){
+        serviceInstance.remove('/remove/multiple/*', {}, function(e, response){
 
           if (e) return callback(e);
 
@@ -148,24 +207,25 @@ describe('happn-service-mongo functional tests', function() {
 
   it('gets data with wildcard', function(callback) {
 
-    serviceInstance.upsert('/get/multiple/1/' + testId, {data:{"test":"data"}}, {}, false, function(e, response){
+    serviceInstance.upsert('/get/multiple/1/' + testId, {"test":"data"}, {}, function(e, response){
 
       if (e) return callback(e);
 
-      serviceInstance.upsert('/get/multiple/2/' + testId, {data:{"test":"data"}}, {}, false, function(e, response){
+      serviceInstance.upsert('/get/multiple/2/' + testId, {"test":"data"}, {}, function(e, response){
 
         if (e) return callback(e);
 
-        serviceInstance.find('/get/multiple/*/' + testId, {}, function(e, response){
+         serviceInstance.get('/get/multiple/*/' + testId, {}, function(e, response){
 
-          expect(response.length).to.equal(2);
+            expect(response.length).to.equal(2);
+            expect(response[0].data.test).to.equal('data');
+            expect(response[0]._meta.path).to.equal('/get/multiple/1/' + testId);
+            expect(response[1].data.test).to.equal('data');
+            expect(response[1]._meta.path).to.equal('/get/multiple/2/' + testId);
 
-          expect(response[0].data.test).to.equal('data');
-          expect(response[1].data.test).to.equal('data');
+            callback();
 
-          callback();
-
-        });
+         });
       });
     });
   });
@@ -203,25 +263,19 @@ describe('happn-service-mongo functional tests', function() {
       limit: 2
     };
 
-    // serviceInstance.upsert('/get/multiple/1/' + testId, {data:{"test":"data"}}, {}, false, function(e, response){
-    serviceInstance.upsert('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex/' + test_path_end, complex_obj, {}, false, function (e, put_result) {
+    serviceInstance.upsert('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex/' + test_path_end, complex_obj, null, function (e, put_result) {
 
       expect(e == null).to.be(true);
-
-      serviceInstance.upsert('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex/' + test_path_end + '/1', complex_obj, {}, false, function (e, put_result) {
-
+      serviceInstance.upsert('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex/' + test_path_end + '/1', complex_obj, null, function (e, put_result) {
         expect(e == null).to.be(true);
 
-        serviceInstance.upsert('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex/' + test_path_end + '/2', {"test":"data"}, {}, false, function (e, put_result) {
-
+        serviceInstance.upsert('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex/' + test_path_end + '/2', {"test":"data"}, null, function (e, put_result) {
           expect(e == null).to.be(true);
 
-          serviceInstance.find('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex*', {
+          serviceInstance.get('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex*', {
             criteria: criteria1,
             options: options1
           }, function (e, search_result) {
-
-            console.log('RESULTS:::', e, search_result);
 
             expect(e == null).to.be(true);
             expect(search_result.length == 1).to.be(true);
@@ -240,7 +294,7 @@ describe('happn-service-mongo functional tests', function() {
     });
   });
 
-  xit('gets data with $not', function(done) {
+  it('gets data with $not', function(done) {
 
     var test_obj = {
       data:'ok'
@@ -276,7 +330,7 @@ describe('happn-service-mongo functional tests', function() {
 
   });
 
-  xit('sets value data', function (callback) {
+  it('sets value data', function (callback) {
 
     try {
       var test_string = require('shortid').generate();
@@ -306,7 +360,7 @@ describe('happn-service-mongo functional tests', function() {
     }
   });
 
-  xit('does a sort and limit', function(done){
+  it('does a sort and limit', function(done){
 
     var itemCount = 100;
 
@@ -396,4 +450,5 @@ describe('happn-service-mongo functional tests', function() {
       }
     );
   });
+
 });
