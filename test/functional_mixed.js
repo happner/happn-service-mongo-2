@@ -9,12 +9,59 @@ describe('happn-tests', function () {
   var happnInstance = null;
   var test_id;
   var path = require('path');
+  var fs = require('fs');
 
   this.timeout(5000);
 
+  var findRecordInDataFile = function (path, filepath, callback) {
+
+    try {
+
+      setTimeout(function () {
+
+        var fs = require('fs'), byline = require('byline');
+        var stream = byline(fs.createReadStream(filepath, {encoding: 'utf8'}));
+        var found = false;
+
+        stream.on('data', function (line) {
+
+          if (found) return;
+
+          var record = JSON.parse(line);
+
+          if (record._id == path) {
+            found = true;
+            stream.end();
+            return callback(null, record);
+          }
+
+        });
+
+        stream.on('end', function () {
+
+          if (!found)
+            callback(null, null);
+
+        });
+
+      }, 1000)
+
+    } catch (e) {
+      callback(e);
+    }
+  }
+
   var db_path = path.resolve(__dirname.replace('test',''))  + path.sep + 'index.js';
 
-  console.log('db_path:::', db_path);
+  var db_local_file_path = __dirname + path.sep + 'tmp' + path.sep + 'functional_mixed.nedb';
+
+  try{
+    fs.unlinkSync(db_local_file_path);
+  }catch(e){
+
+    var errorMessage = e.toString();
+    console.warn('didn\'t unlink test file: ' + errorMessage);
+  }
 
   var config = {
     services:{
@@ -25,6 +72,15 @@ describe('happn-tests', function () {
               name:'mongo',
               provider:db_path,
               isDefault:true
+            },
+            {
+              name:'nedb',
+              settings:{
+                filename:db_local_file_path
+              },
+              patterns:[
+                '/LOCAL/*'
+              ]
             }
           ]
         }
@@ -88,12 +144,13 @@ describe('happn-tests', function () {
     }
   });
 
-  it('the publisher should set new data', function (callback) {
+  it('the publisher should set local new data', function (callback) {
 
     try {
       var test_path_end = require('shortid').generate();
 
-      publisherclient.set('1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/' + test_path_end, {
+      publisherclient.set('/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/' + test_path_end, {
+
         property1: 'property1',
         property2: 'property2',
         property3: 'property3'
@@ -102,12 +159,20 @@ describe('happn-tests', function () {
       }, function (e, result) {
 
         if (!e) {
-          publisherclient.get('1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/' + test_path_end, null, function (e, results) {
+
+          publisherclient.get('/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/' + test_path_end, null, function (e, results) {
 
             expect(results.property1 == 'property1').to.be(true);
             expect(results.created == results.modified).to.be(true);
 
-            callback(e);
+            findRecordInDataFile('/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/' + test_path_end, db_local_file_path, function(e, record){
+
+              if (e) return callback(e);
+
+              if (!record) return callback('record not found in data file: ' + db_local_file_path);
+
+              callback();
+            });
           });
         } else
           callback(e);
@@ -118,27 +183,27 @@ describe('happn-tests', function () {
     }
   });
 
-  it('the listener should pick up a single wildcard event', function (callback) {
+  it('the listener should pick up a single wildcard event, locally', function (callback) {
 
     try {
 
       //first listen for the change
-      listenerclient.on('/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event/*', {
+      listenerclient.on('/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event/*', {
         event_type: 'set',
         count: 1
       }, function (message) {
 
-        expect(listenerclient.events['/SET@/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event/*'].length).to.be(0);
+        expect(listenerclient.events['/SET@/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event/*'].length).to.be(0);
         callback();
 
       }, function (e) {
 
         if (!e) {
 
-          expect(listenerclient.events['/SET@/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event/*'].length).to.be(1);
+          expect(listenerclient.events['/SET@/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event/*'].length).to.be(1);
 
           //then make the change
-          publisherclient.set('/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event/blah', {
+          publisherclient.set('/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event/blah', {
             property1: 'property1',
             property2: 'property2',
             property3: 'property3'
@@ -158,7 +223,7 @@ describe('happn-tests', function () {
 
 
     var test_path_end = require('shortid').generate();
-    publisherclient.get('1_eventemitter_embedded_sanity/' + test_id + '/unfound/exact/' + test_path_end, null, function (e, results) {
+    publisherclient.get('/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/unfound/exact/' + test_path_end, null, function (e, results) {
       ////////////console.log('new data results');
 
       expect(e).to.be(null);
@@ -173,7 +238,7 @@ describe('happn-tests', function () {
 
     var timesCount = 10;
 
-    var testBasePath = '/1_eventemitter_embedded_sanity/' + test_id + '/set_multiple'
+    var testBasePath = '/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/set_multiple'
 
     try {
 

@@ -51,23 +51,26 @@ MongoProvider.prototype.findOne = function(criteria, fields, callback){
   return this.db.findOne(criteria, fields, callback);
 };
 
-MongoProvider.prototype.find = function(path, options, callback){
+MongoProvider.prototype.find = function(path, parameters, callback){
 
   var _this = this;
 
   var pathCriteria = _this.getPathCriteria(path);
 
-  if (options.fields == null) options.fields = undefined;
+  if (parameters.criteria) pathCriteria.$and.push(parameters.criteria);
 
-  if (options.criteria) pathCriteria.$and.push(options.criteria);
+  var searchOptions = {};
 
-  var searchOptions = {
-    fields:options.fields
-  };
+  var sortOptions = parameters.options?parameters.options.sort:null;
 
-  if (options.limit) searchOptions.limit = options.limit;
+  if (parameters.options){
 
-  _this.db.find(pathCriteria, searchOptions, options.sort, function(e, items){
+    if (parameters.options.fields) searchOptions.fields = parameters.options.fields;
+
+    if (parameters.options.limit) searchOptions.limit = parameters.options.limit;
+  }
+
+  _this.db.find(pathCriteria, searchOptions, sortOptions, function(e, items){
 
     if (e) return callback(e);
 
@@ -118,7 +121,7 @@ MongoProvider.prototype.upsert = function(path, setData, options, dataWasMerged,
 
       if (err) return callback(err);
 
-      callback(null, response, setParameters.$set, null, _this.__getMeta(response));
+      callback(null, response, setParameters.$set, false, _this.__getMeta(response));
 
     }.bind(_this));
   }
@@ -129,7 +132,7 @@ MongoProvider.prototype.upsert = function(path, setData, options, dataWasMerged,
 
       if (err) return callback(err);
 
-      callback(null, response, null, setParameters.$set, _this.__getMeta(response));
+      callback(null, response, response, false, _this.__getMeta(response));
 
     }.bind(_this));
   }
@@ -138,7 +141,7 @@ MongoProvider.prototype.upsert = function(path, setData, options, dataWasMerged,
 
     if (err) return callback(err);
 
-    callback(null, response, null, response, _this.__getMeta(response));
+    callback(null, response, response, true, _this.__getMeta(response));
 
   }.bind(_this));
 };

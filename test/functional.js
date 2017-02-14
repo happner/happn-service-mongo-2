@@ -51,11 +51,12 @@ describe('happn-service-mongo functional tests', function() {
     var beforeCreatedOrModified = Date.now();
 
     setTimeout(function(){
+
       serviceInstance.upsert('/set/' + testId, {"data":{"test":"data"}}, {}, false, function(e, response, created, upsert, meta){
 
         if (e) return callback(e);
 
-        expect(response.data.test).to.equal("data");
+        expect(created.data.test).to.equal("data");
 
         expect(meta.created > beforeCreatedOrModified).to.equal(true);
 
@@ -70,11 +71,11 @@ describe('happn-service-mongo functional tests', function() {
 
   it('gets data', function(callback) {
 
-    serviceInstance.upsert('/get/' + testId, {data:{"test":"data"}}, {}, false, function(e, response){
+    serviceInstance.upsert('/get/' + testId, {data:{"test":"data"}}, {}, false, function(e, response, created){
 
       if (e) return callback(e);
 
-      expect(response.data.test).to.equal("data");
+      expect(created.data.test).to.equal("data");
 
       serviceInstance.find('/get/' + testId, {}, function(e, items){
 
@@ -137,6 +138,7 @@ describe('happn-service-mongo functional tests', function() {
           if (e) return callback(e);
 
           expect(response._meta.path).to.equal('/remove/multiple/*');
+
           expect(response.data.removed).to.equal(2);
 
           callback();
@@ -161,6 +163,7 @@ describe('happn-service-mongo functional tests', function() {
           expect(response.length).to.equal(2);
 
           expect(response[0].data.test).to.equal('data');
+
           expect(response[1].data.test).to.equal('data');
 
           callback();
@@ -184,10 +187,10 @@ describe('happn-service-mongo functional tests', function() {
     };
 
     var criteria1 = {
-      $or: [{"regions": {$in: ['North', 'South', 'East', 'West']}},
-        {"towns": {$in: ['North.Cape Town', 'South.East London']}},
-        {"categories": {$in: ["Action", "History"]}}],
-      "keywords": {$in: ["bass", "Penny Siopis"]}
+      $or: [{"data.regions": {$in: ['North', 'South', 'East', 'West']}},
+        {"data.towns": {$in: ['North.Cape Town', 'South.East London']}},
+        {"data.categories": {$in: ["Action", "History"]}}],
+      "data.keywords": {$in: ["bass", "Penny Siopis"]}
     };
 
     var options1 = {
@@ -204,11 +207,11 @@ describe('happn-service-mongo functional tests', function() {
     };
 
     // serviceInstance.upsert('/get/multiple/1/' + testId, {data:{"test":"data"}}, {}, false, function(e, response){
-    serviceInstance.upsert('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex/' + test_path_end, complex_obj, {}, false, function (e, put_result) {
+    serviceInstance.upsert('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex/' + test_path_end, {data:complex_obj}, {}, false, function (e, put_result) {
 
       expect(e == null).to.be(true);
 
-      serviceInstance.upsert('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex/' + test_path_end + '/1', complex_obj, {}, false, function (e, put_result) {
+      serviceInstance.upsert('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex/' + test_path_end + '/1', {data:complex_obj}, {}, false, function (e, put_result) {
 
         expect(e == null).to.be(true);
 
@@ -221,12 +224,10 @@ describe('happn-service-mongo functional tests', function() {
             options: options1
           }, function (e, search_result) {
 
-            console.log('RESULTS:::', e, search_result);
-
             expect(e == null).to.be(true);
             expect(search_result.length == 1).to.be(true);
 
-            serviceInstance.get('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex*', {
+            serviceInstance.find('/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex*', {
               criteria: criteria2,
               options: options2
             }, function (e, search_result) {
@@ -240,7 +241,7 @@ describe('happn-service-mongo functional tests', function() {
     });
   });
 
-  xit('gets data with $not', function(done) {
+  it('gets data with $not', function(done) {
 
     var test_obj = {
       data:'ok'
@@ -250,17 +251,19 @@ describe('happn-service-mongo functional tests', function() {
       data:'notok'
     };
 
-    serviceInstance.upsert('/not_get/' + testId + '/ok/1', test_obj, null, function (e) {
+    serviceInstance.upsert('/not_get/' + testId + '/ok/1', test_obj, {}, false, function (e) {
+
       expect(e == null).to.be(true);
 
-      serviceInstance.upsert('/not_get/' + testId + '/_notok_/1' , test_obj1, null, function (e) {
+      serviceInstance.upsert('/not_get/' + testId + '/_notok_/1' , test_obj1, {}, false, function (e) {
+
         expect(e == null).to.be(true);
 
         var listCriteria = {criteria: {$not:{}}};
 
         listCriteria.criteria.$not['path'] = {$regex: new RegExp(".*_notok_.*")};
 
-        serviceInstance.get('/not_get/' + testId + '/*', listCriteria, function (e, search_result) {
+        serviceInstance.find('/not_get/' + testId + '/*', listCriteria, function (e, search_result) {
 
           expect(e == null).to.be(true);
 
@@ -269,44 +272,11 @@ describe('happn-service-mongo functional tests', function() {
           done();
 
         });
-
       });
-
     });
-
   });
 
-  xit('sets value data', function (callback) {
-
-    try {
-      var test_string = require('shortid').generate();
-      var test_base_url = '/a1_eventemitter_embedded_datatypes/' + testId + '/set/string/' + test_string;
-
-      serviceInstance.upsert(test_base_url, test_string, {noPublish: true}, function (e, result) {
-
-        if (!e) {
-
-          expect(result.data.value).to.be(test_string);
-
-          serviceInstance.get(test_base_url, null, function (e, result) {
-
-            if (e) return callback(e);
-
-            expect(result.data.value).to.be(test_string);
-
-            callback(e);
-          });
-        }
-        else
-          callback(e);
-      });
-
-    } catch (e) {
-      callback(e);
-    }
-  });
-
-  xit('does a sort and limit', function(done){
+  it('does a sort and limit', function(done){
 
     var itemCount = 100;
 
@@ -333,7 +303,7 @@ describe('happn-service-mongo functional tests', function() {
 
         var testPath = base_path + item.item_sort_id;
 
-        serviceInstance.upsert(testPath, item, {noPublish: true}, function(e, upserted){
+        serviceInstance.upsert(testPath, {data:item}, {noPublish: true}, false, function(e){
 
           if (e) return callback(e);
 
@@ -353,7 +323,7 @@ describe('happn-service-mongo functional tests', function() {
 
         });
 
-        serviceInstance.get(base_path + '*', {options:{sort:{item_sort_id:1}}, limit:50}, function(e, items){
+        serviceInstance.find(base_path + '*', {options:{sort:{'data.item_sort_id':1}}, limit:50}, function(e, items){
 
           if (e) return done(e);
 
@@ -362,6 +332,7 @@ describe('happn-service-mongo functional tests', function() {
             if (itemIndex >= 50) break;
 
             var item_from_mongo = items[itemIndex];
+
             var item_from_array = randomItems[itemIndex];
 
             if (item_from_mongo.data.item_sort_id != item_from_array.item_sort_id) return done(new Error('ascending sort failed'));
@@ -374,7 +345,7 @@ describe('happn-service-mongo functional tests', function() {
 
           });
 
-          serviceInstance.get(base_path + '/*', {sort:{"item_sort_id":-1}, limit:50}, function(e, items){
+          serviceInstance.find(base_path + '/*', {options:{sort:{"data.item_sort_id":-1}}, limit:50}, function(e, items){
 
             if (e) return done(e);
 
@@ -391,7 +362,6 @@ describe('happn-service-mongo functional tests', function() {
             done();
 
           });
-
         });
       }
     );
