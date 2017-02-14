@@ -1,10 +1,10 @@
 {
   "name": "happn-service-mongo-2",
   "description": "service plugin for running happn on a mongo database, for happn-3 instances",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "main": "./lib/index",
   "scripts": {
-    "test": "mocha silence.js test/functional && mocha silence.js test/functional-cache && node test/happn-test",
+    "test": "mocha silence.js test",
     "test-cover": "istanbul cover _mocha -- silence.js test",
     "happn-tests": "node test/happn-test"
   },
@@ -30,15 +30,17 @@
     "underscore.string": "3.2.2"
   },
   "devDependencies": {
+    "byline": "^5.0.0",
     "chai": "^3.2.0",
+    "commander": "^2.9.0",
     "coveralls": "^2.11.6",
     "expect.js": "*",
     "gulp": "^3.9.0",
+    "happn-3": "latest",
+    "happn-tests-2": "latest",
     "istanbul": "^0.4.1",
     "mocha": "*",
-    "shortid": "^2.2.4",
-    "happn-tests-2": "latest",
-    "commander":"^2.9.0"
+    "shortid": "^2.2.4"
   },
   "readmeFilename": "README.md"
 }
