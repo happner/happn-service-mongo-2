@@ -117,6 +117,8 @@ MongoProvider.prototype.upsert = function(path, setData, options, dataWasMerged,
 
   if (options.upsertType === _this.UPSERT_TYPE.insert){
 
+    setParameters.$set.created = modifiedOn;
+
     return _this.db.insert(setParameters.$set, options, function (err, response) {
 
       if (err) return callback(err);

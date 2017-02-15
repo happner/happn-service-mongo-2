@@ -7,6 +7,11 @@
 - added happn-3 as dev dependancy
 - modified to work as a happn-3 data provider
 
+1.0.1 2017-02-15
+----------------
+- updated happn
+- fixed created date not being returned on insert
+
 
 
 

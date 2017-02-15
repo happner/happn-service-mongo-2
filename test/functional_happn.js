@@ -14,8 +14,6 @@ describe('happn-tests', function () {
 
   var db_path = path.resolve(__dirname.replace('test',''))  + path.sep + 'index.js';
 
-  console.log('db_path:::', db_path);
-
   var config = {
     services:{
       data:{
@@ -311,23 +309,32 @@ describe('happn-tests', function () {
   });
 
   it('should contain the same payload between a merge and a normal store for first store', function (done) {
+
+    var shortid = require('shortid').generate();
+
     var object = {param1: 10, param2: 20};
     var firstTime = true;
 
-    listenerclient.on('mergeTest/object', {event_type: 'set', count: 2}, function (message, meta) {
+    listenerclient.on('mergeTest5/object/*', {event_type: 'set', count: 2}, function (message, meta) {
 
       expect(message).to.eql(object);
+
       if (firstTime) {
         firstTime = false;
         return;
       }
       done();
     }, function (err) {
-      expect(err).to.not.be.ok();
-      publisherclient.set('mergeTest/object', object, {merge: true}, function (err) {
-        expect(err).to.not.be.ok();
-        publisherclient.set('mergeTest/object', object, {merge: true}, function (err) {
-          expect(err).to.not.be.ok();
+
+      if (err) return done(err);
+
+      publisherclient.set('mergeTest5/object/' + shortid, object, {merge: true}, function (err) {
+
+        if (err) return done(err);
+
+        publisherclient.set('mergeTest5/object/' + shortid, object, {merge: true}, function (err) {
+
+          if (err) return done(err);
         });
       });
     })
