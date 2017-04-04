@@ -1,4 +1,4 @@
-describe('happn-service-mongo functional tests', function () {
+describe('happn-service-mongo replica url tests', function () {
 
   this.timeout(20000);
 
@@ -8,44 +8,32 @@ describe('happn-service-mongo functional tests', function () {
 
   var fullUrl = 'mongodb://username:password@127.0.0.1:27017,127.0.0.1:27018,127.0.0.1:27019/happn?replicaSet=test-set&ssl=true&authSource=admin';
 
-  it('should handle a url as is if a dbname is specified', function (done) {
+  it('should handle a url as is if a dbname is specified', function () {
     var config = {
-      url: fullUrl,
+      url: fullUrl
     };
 
     var serviceInstance = new service(config);
-    serviceInstance.initialize(function (e) {
-      console.log(serviceInstance);
-      expect(serviceInstance.config.url).to.equal(config.url);
-      done();
-    });
+    expect(serviceInstance.config.url).to.equal(config.url);
   });
 
-  it('should build the url if a db is specified in the options', function (done) {
+  it('should build the url if a db is specified in the options', function () {
     var config = {
       url: 'mongodb://username:password@127.0.0.1:27017,127.0.0.1:27018,127.0.0.1:27019',
       database: 'happn-test'
     };
 
     var serviceInstance = new service(config);
-    serviceInstance.initialize(function (e) {
-      console.log(serviceInstance);
-      expect(serviceInstance.config.url).to.equal(config.url + '/' + config.database);
-      done();
-    });
+    expect(serviceInstance.config.url).to.equal(config.url + '/' + config.database);
   });
 
-  it('should build the url if a db is specified in the options and there are options in the url', function (done) {
+  it('should build the url if a db is specified in the options and there are options in the url', function () {
     var config = {
       url: 'mongodb://username:password@127.0.0.1:27017,127.0.0.1:27018,127.0.0.1:27019?replicaSet=test-set&ssl=true&authSource=admin',
       database: 'happn-test'
     };
 
     var serviceInstance = new service(config);
-    serviceInstance.initialize(function (e) {
-      console.log(serviceInstance);
-      expect(serviceInstance.config.url).to.equal('mongodb://username:password@127.0.0.1:27017,127.0.0.1:27018,127.0.0.1:27019/happn-test?replicaSet=test-set&ssl=true&authSource=admin');
-      done();
-    });
+    expect(serviceInstance.config.url).to.equal('mongodb://username:password@127.0.0.1:27017,127.0.0.1:27018,127.0.0.1:27019/happn-test?replicaSet=test-set&ssl=true&authSource=admin');
   });
 });
