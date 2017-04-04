@@ -12,6 +12,12 @@
 - updated happn
 - fixed created date not being returned on insert
 
+1.1.0 2017-04-04
+----------------
+- issue-3 - Allow for replicaSet options
+- issue-4 - Allow for ssl in options
+- issue-5 - Don't mangle replica set url
+
 
 
 
