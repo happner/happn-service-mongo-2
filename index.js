@@ -10,6 +10,8 @@ function MongoProvider (config){
 
   var configManager = new ConfigManager();
 
+  console.log('config to parse:::', config);
+
   Object.defineProperty(this, 'config', {value:configManager.parse(config)});
 }
 
@@ -37,9 +39,13 @@ MongoProvider.prototype.__createIndexes = function(config, callback){
 
   var _this = this;
 
+  console.log('config:::', config);
+
   var doCallback = function(e){
 
     if (e) return callback(new Error('failed to create indexes: ' + e.toString(), e));
+
+    console.log('doing callback:::');
     callback();
   };
 
@@ -69,7 +75,7 @@ MongoProvider.prototype.__createIndexes = function(config, callback){
         console.log('indexes:::',indexes);
 
         //indexes are configurable, but we always use a default unique one on path, unless explicitly specified
-        async.eachSeries(Object.keys(_this.config.index), function(indexKey, indexCB){
+        async.eachSeries(Object.keys(config.index), function(indexKey, indexCB){
 
           var found = false;
 
@@ -82,7 +88,7 @@ MongoProvider.prototype.__createIndexes = function(config, callback){
 
           console.log('found:::', found);
 
-          var indexConfig = _this.config.index[indexKey];
+          var indexConfig = config.index[indexKey];
 
           _this.db.data.createIndex(indexConfig.fields, indexConfig.options, function(e, result){
 

@@ -18,6 +18,7 @@ describe('indexes-tests', function () {
   var db_path = path.resolve(__dirname.replace('test',''))  + path.sep + 'index.js';
 
   var defaultConfig = {
+    port:55001,
     services:{
       data:{
         config:{
@@ -34,6 +35,7 @@ describe('indexes-tests', function () {
   };
 
   var indexesConfig = {
+    port:55002,
     services:{
       data:{
         config:{
@@ -41,15 +43,17 @@ describe('indexes-tests', function () {
             {
               name:'mongo',
               provider:db_path,
-              database:'indexes_configured_test',
-              index:{
-                "happn_path_index":{
-                  fields:{path: 1},
-                  options:{unique: true, w: 1}
-                },
-                "another_index":{
-                  fields:{test: 1},
-                  options:{w: 1}
+              settings: {
+                database: 'indexes_configured_test',
+                index: {
+                  "happn_path_index": {
+                    fields: {path: 1},
+                    options: {unique: true, w: 1}
+                  },
+                  "another_index": {
+                    fields: {test: 1},
+                    options: {w: 1}
+                  }
                 }
               }
             }
@@ -159,7 +163,7 @@ describe('indexes-tests', function () {
 
   it('should find the configured index records', function (done) {
 
-    defaultclient.get('/_SYSTEM/INDEXES/*', null, function (e, results) {
+    indexedclient.get('/_SYSTEM/INDEXES/*', null, function (e, results) {
 
       if (e) return done(e);
 
@@ -167,7 +171,7 @@ describe('indexes-tests', function () {
 
       results.forEach(function(indexRecord){
 
-        if (indexRecord._meta.path == 'happn_path_index'){
+        if (indexRecord._meta.path == '/_SYSTEM/INDEXES/happn_path_index'){
 
           expect(indexRecord.fields).to.eql({path: 1});
           expect(indexRecord.options).to.eql({unique: true, w: 1});
@@ -180,6 +184,24 @@ describe('indexes-tests', function () {
       });
 
       done();
+    });
+  });
+
+  it('should find the configured indexes in mongo', function (done) {
+
+    var  mongodb = require('mongodb')
+      ,  mongoclient = mongodb.MongoClient;
+
+    mongoclient.connect ("mongodb://127.0.0.1:27017", { database: "indexes_configured_test" }, function (err, database) {
+
+      if (err) return callback(err);
+
+      var collection = database.collection("happn");
+
+      collection.listIndexes().toArray(function(e, indexes){
+        console.log('indexes:::', indexes);
+        done();
+      });
     });
   });
 });
