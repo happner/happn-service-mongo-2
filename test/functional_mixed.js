@@ -63,6 +63,33 @@ describe('happn-tests', function () {
     console.warn('didn\'t unlink test file: ' + errorMessage);
   }
 
+  var happnerConfig = {
+    happn:{
+      services:{
+        data:{
+          config:{
+            datastores:[
+              {
+                name:'mongo',
+                provider:'happn-service-mongo-2',
+                isDefault:true
+              },
+              {
+                name:'nedb',
+                settings:{
+                  filename:db_local_file_path
+                },
+                patterns:[
+                  '/mesh/schema/*'
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  };
+
   var config = {
     services:{
       data:{
