@@ -1,4 +1,4 @@
-describe('happn-tests', function () {
+describe('happn-tests-mixed', function () {
 
   var expect = require('expect.js');
   var happn = require('happn-3');
