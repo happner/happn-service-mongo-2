@@ -24,7 +24,9 @@
 - updated index to push creation log to database, system also checks if index previously created
 - index tests
 
-
+1.2.1 2017-06-22
+----------------
+- updated travis.yml
 
 
 

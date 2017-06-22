@@ -11,3 +11,9 @@ script: "npm test"
 services:
   - mongodb
   - redis-server
+addons:
+  apt:
+    sources:
+    - mongodb-3.0-precise
+    packages:
+    - mongodb-org-server
