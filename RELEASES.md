@@ -18,6 +18,12 @@
 - issue-4 - Allow for ssl in options
 - issue-5 - Don't mangle replica set url
 
+1.2.0 2017-06-21
+----------------
+- issue-7 - Indexes not being created
+- updated index to push creation log to database, system also checks if index previously created
+- index tests
+
 
 
 

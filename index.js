@@ -1,4 +1,6 @@
-var db = require('./lib/datastore');
+var db = require('./lib/datastore')
+  , async = require('async')
+;
 
 function MongoProvider (config){
 
@@ -27,8 +29,73 @@ MongoProvider.prototype.initialize = function(callback){
 
     _this.db = store;
 
-    callback();
+    _this.__createIndexes(_this.config, callback);
   });
+};
+
+MongoProvider.prototype.__createIndexes = function(config, callback){
+
+  var _this = this;
+
+  var doCallback = function(e){
+
+    if (e) return callback(new Error('failed to create indexes: ' + e.toString(), e));
+    callback();
+  };
+
+  try{
+
+    if (config.index === false){
+
+      console.warn('no path index configured for datastore with collection: ' + config.collection + ' this could result in duplicates and bad performance, please make sure all data items have a unique "path" property');
+
+      doCallback();
+
+    } else {
+
+      if (config.index == null){
+        config.index = {
+          "happn_path_index":{
+            fields:{path: 1},
+            options:{unique: true, w: 1}
+          }
+        };
+      }
+
+      _this.find('/_SYSTEM/INDEXES/*', {}, function(e, indexes){
+
+        if (e) return doCallback(e);
+
+        //indexes are configurable, but we always use a default unique one on path, unless explicitly specified
+        async.eachSeries(Object.keys(config.index), function(indexKey, indexCB){
+
+          var found = false;
+
+          indexes.every(function(indexConfig){
+            if (indexConfig.path == '/_SYSTEM/INDEXES/' + indexKey) found = true;
+            return !found;
+          });
+
+          if (found) return indexCB();
+
+          var indexConfig = config.index[indexKey];
+
+          _this.db.data.createIndex(indexConfig.fields, indexConfig.options, function(e, result){
+
+            if (e) {
+              //check if there is an index created error
+              return indexCB(e);
+            }
+
+            _this.upsert('/_SYSTEM/INDEXES/' + indexKey, { data: indexConfig, creation_result:result }, {}, false, indexCB);
+          });
+        }, doCallback);
+      });
+    }
+
+  }catch(e){
+    doCallback(e);
+  }
 };
 
 MongoProvider.prototype.getPathCriteria = function(path){
