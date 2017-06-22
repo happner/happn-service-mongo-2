@@ -193,6 +193,8 @@ describe('indexes-tests', function () {
 
   it('should find the configured indexes in mongo', function (done) {
 
+    if (process.env.INTRAVENOUS === 'yes') return done();
+
     var  mongodb = require('mongodb')
       ,  mongoclient = mongodb.MongoClient;
 
