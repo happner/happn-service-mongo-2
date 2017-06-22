@@ -26,7 +26,10 @@ describe('indexes-tests', function () {
             {
               name:'mongo',
               provider:db_path,
-              database:'indexes_default_test'
+              settings: {
+                database: 'indexes_default_test_db',
+                collection: 'indexes_default_test_db_coll'
+              }
             }
           ]
         }
@@ -44,7 +47,8 @@ describe('indexes-tests', function () {
               name:'mongo',
               provider:db_path,
               settings: {
-                database: 'indexes_configured_test',
+                database: 'indexes_configured_test_db',
+                collection:'indexes_configured_test_db_coll',
                 index: {
                   "happn_path_index": {
                     fields: {path: 1},
@@ -192,14 +196,14 @@ describe('indexes-tests', function () {
     var  mongodb = require('mongodb')
       ,  mongoclient = mongodb.MongoClient;
 
-    mongoclient.connect ("mongodb://127.0.0.1:27017", { database: "indexes_configured_test" }, function (err, database) {
+    mongoclient.connect ("mongodb://127.0.0.1:27017", { database: "indexes_configured_test_db" }, function (err, database) {
 
       if (err) return callback(err);
 
       var collection = database.collection("happn");
 
       collection.listIndexes().toArray(function(e, indexes){
-        console.log('indexes:::', indexes);
+        expect(indexes).to.eql([{"v":1,"key":{"_id":1},"ns":"admin.happn","name":"_id_"},{"v":1,"key":{"happn_path_index":1},"ns":"admin.happn","name":"happn_path_index_1","path":1},{"v":1,"key":{"path":1},"unique":true,"ns":"admin.happn","name":"path_1"},{"v":1,"key":{"test":1},"ns":"admin.happn","name":"test_1"}]);
         done();
       });
     });
