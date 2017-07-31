@@ -98,20 +98,69 @@ MongoProvider.prototype.__createIndexes = function(config, callback){
   }
 };
 
-MongoProvider.prototype.getPathCriteria = function(path){
+MongoProvider.prototype.escapeRegex = function (str) {
+
+  if (typeof str !== 'string') throw new TypeError('Expected a string');
+
+  return str.replace(/[|\\{}()[\]^$+*?.]/g, "\\$&");
+};
+
+MongoProvider.prototype.preparePath = function (path) {
+
+  //strips out duplicate sequential wildcards, ie simon***bishop -> simon*bishop
+
+  if (!path) return '*';
+
+  var prepared = '';
+
+  var lastChar = null;
+
+  for (var i = 0; i < path.length; i++) {
+
+    if (path[i] == '*' && lastChar == '*') continue;
+
+    prepared += path[i];
+
+    lastChar = path[i];
+  }
+
+  return prepared;
+};
+
+MongoProvider.prototype.getPathCriteria = function (path) {
 
   var pathCriteria = {$and: []};
 
   var returnType = path.indexOf('*'); //0,1 == array -1 == single
 
-  if (returnType == 0) pathCriteria.$and.push({'path': {$regex: new RegExp(path.replace(/[*]/g, '.*'))}});//keys with any prefix ie. */joe/bloggs
+  if (returnType > -1) {
 
-  else if (returnType > 0) pathCriteria.$and.push({'path': {$regex: new RegExp('^' + path.replace(/[*]/g, '.*'))}});//keys that start with something but any suffix /joe/*/bloggs/*
+    //strip out **,***,****
+    var searchPath = this.preparePath(path);
 
-  else pathCriteria.$and.push({'path': path}); //precise match
+    searchPath = '^' + this.escapeRegex(searchPath).replace(/\\\*/g, ".*") + '$';
+
+    pathCriteria.$and.push({'path': {$regex: new RegExp(searchPath)}});
+
+  } else pathCriteria.$and.push({'path': path}); //precise match
 
   return pathCriteria;
 };
+
+// MongoProvider.prototype.getPathCriteria = function(path){
+//
+//   var pathCriteria = {$and: []};
+//
+//   var returnType = path.indexOf('*'); //0,1 == array -1 == single
+//
+//   if (returnType == 0) pathCriteria.$and.push({'path': {$regex: new RegExp(path.replace(/[*]/g, '.*'))}});//keys with any prefix ie. */joe/bloggs
+//
+//   else if (returnType > 0) pathCriteria.$and.push({'path': {$regex: new RegExp('^' + path.replace(/[*]/g, '.*'))}});//keys that start with something but any suffix /joe/*/bloggs/*
+//
+//   else pathCriteria.$and.push({'path': path}); //precise match
+//
+//   return pathCriteria;
+// };
 
 MongoProvider.prototype.findOne = function(criteria, fields, callback){
 

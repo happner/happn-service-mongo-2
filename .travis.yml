@@ -6,8 +6,16 @@ node_js:
   - "4"
   - "0.10"
 env:
-- NODE_TLS_REJECT_UNAUTHORIZED=0
+  global:
+    - NODE_TLS_REJECT_UNAUTHORIZED=0
+    - INTRAVENOUS=yes
 script: "npm test"
 services:
   - mongodb
   - redis-server
+addons:
+  apt:
+    sources:
+    - mongodb-3.0-precise
+    packages:
+    - mongodb-org-server
