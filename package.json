@@ -17,11 +17,11 @@
     "url": "https://github.com/happner/happn-service-mongo-2.git"
   },
   "dependencies": {
+    "2": "1.0.2",
     "async": "1.5.2",
     "bluebird": "2.10.2",
-    "happn-logger": "^0.0.1",
-    "mongodb": "2.1.6",
-    "node-uuid": "1.4.7",
+    "happn-logger": "0.0.1",
+    "mongodb": "2.2.34",
     "parse-mongo-url": "1.1.1",
     "redis-lru-cache": "0.1.0",
     "sift": "3.2.6",

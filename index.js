@@ -80,6 +80,8 @@ MongoProvider.prototype.__createIndexes = function(config, callback){
 
           var indexConfig = config.index[indexKey];
 
+          console.log('creating index:::', indexConfig);
+
           _this.db.data.createIndex(indexConfig.fields, indexConfig.options, function(e, result){
 
             if (e) {

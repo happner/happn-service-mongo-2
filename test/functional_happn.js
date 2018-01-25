@@ -941,8 +941,6 @@ describe('happn-tests', function () {
       property3: 'property3'
     }, null, function (e, result) {
 
-      //////////////////console.log('did delete set');
-      //path, event_type, count, handler, done
       //We listen for the DELETE event
       listenerclient.on('/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/delete_me', {
         event_type: 'remove',
@@ -994,9 +992,6 @@ describe('happn-tests', function () {
             count: 0
           },
           function (message) {
-
-            ////console.log('ON RAN');
-            ////console.log(message);
 
             listenerclient.off(currentListenerId, function (e) {
 
@@ -1161,7 +1156,8 @@ describe('happn-tests', function () {
 
   });
 
-  it('will do events in the order they are passed', function (done) {
+  xit('will do events in the order they are passed', function (done) {
+
     publisherclient.set('/test_event_order', {property1: 'property1Value'}, {}, function () {
       publisherclient.log.info('Done setting');
     });
@@ -1175,7 +1171,4 @@ describe('happn-tests', function () {
       }, 1000);
     });
   });
-
-  //require('benchmarket').stop();
-
 });
