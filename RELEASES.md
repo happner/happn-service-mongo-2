@@ -31,6 +31,8 @@
 2.0.0 2017-07-31
 ----------------
 - fixed regex to be less permissive
+- fixed reconnection in dataStore to be more resilient to db outages
+- when the db is disconnected, requests are no longer queued but immediately rejected
 
 
 
