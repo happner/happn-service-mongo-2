@@ -2,7 +2,7 @@ var DataStore = require('../../lib/datastore');
 var async = require('async');
 var shortid = require('shortid');
 
-var TIMES = 100;
+var TIMES = 100000;
 
 var config = {
   url:'mongodb://127.0.0.1:27017'
