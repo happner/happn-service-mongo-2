@@ -1,7 +1,7 @@
 {
   "name": "happn-service-mongo-2",
   "description": "service plugin for running happn on a mongo database, for happn-3 instances",
-  "version": "1.2.0",
+  "version": "2.0.0-alpha.3",
   "main": "./lib/index",
   "scripts": {
     "test": "mocha silence.js test",
@@ -17,31 +17,31 @@
     "url": "https://github.com/happner/happn-service-mongo-2.git"
   },
   "dependencies": {
+    "2": "1.0.2",
     "async": "1.5.2",
     "bluebird": "2.10.2",
-    "happn-logger": "^0.0.1",
-    "mongodb": "^2.1.6",
-    "node-uuid": "^1.4.7",
-    "parse-mongo-url": "^1.1.1",
-    "redis-lru-cache": "^0.1.0",
-    "sift": "^3.2.6",
+    "happn-logger": "0.0.1",
+    "mongodb": "^3.0.1",
+    "parse-mongo-url": "1.1.1",
+    "redis-lru-cache": "0.1.0",
+    "sift": "3.2.6",
     "traverse": "0.6.6",
     "underscore": "1.8.3",
     "underscore.deep": "0.5.1",
     "underscore.string": "3.2.2"
   },
   "devDependencies": {
-    "byline": "^5.0.0",
-    "chai": "^3.2.0",
-    "commander": "^2.9.0",
-    "coveralls": "^2.11.6",
+    "byline": "5.0.0",
+    "chai": "3.2.0",
+    "commander": "2.9.0",
+    "coveralls": "2.11.6",
     "expect.js": "*",
-    "gulp": "^3.9.0",
+    "gulp": "3.9.0",
     "happn-3": "latest",
     "happn-tests-2": "latest",
-    "istanbul": "^0.4.1",
-    "mocha": "*",
-    "shortid": "^2.2.4"
+    "istanbul": "0.4.1",
+    "mocha": "3.4.2",
+    "shortid": "2.2.4"
   },
   "readmeFilename": "README.md"
 }

@@ -193,17 +193,31 @@ describe('indexes-tests', function () {
 
   it('should find the configured indexes in mongo', function (done) {
 
+    if (process.env.INTRAVENOUS === 'yes') return done();
+
     var  mongodb = require('mongodb')
       ,  mongoclient = mongodb.MongoClient;
 
-    mongoclient.connect ("mongodb://127.0.0.1:27017", { database: "indexes_configured_test_db" }, function (err, database) {
+    mongoclient.connect ("mongodb://127.0.0.1:27017",{}, function (err, client) {
 
       if (err) return callback(err);
 
-      var collection = database.collection("happn");
+      var database = client.db('indexes_configured_test_db');
+
+      var collection = database.collection("indexes_configured_test_db_coll");
 
       collection.listIndexes().toArray(function(e, indexes){
-        expect(indexes).to.eql([{"v":1,"key":{"_id":1},"ns":"admin.happn","name":"_id_"},{"v":1,"key":{"happn_path_index":1},"ns":"admin.happn","name":"happn_path_index_1","path":1},{"v":1,"key":{"path":1},"unique":true,"ns":"admin.happn","name":"path_1"},{"v":1,"key":{"test":1},"ns":"admin.happn","name":"test_1"}]);
+
+        var happn_path_index_1 = false;
+        var test_1 = false;
+
+        indexes.forEach(function(index){
+
+          if (index.ns == "indexes_configured_test_db.indexes_configured_test_db_coll") happn_path_index_1 = true;
+          if (index.name == "test_1") test_1 = true;
+        });
+
+        expect(happn_path_index_1 && test_1).to.be(true);
         done();
       });
     });
