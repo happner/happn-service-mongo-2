@@ -5,7 +5,8 @@ var shortid = require('shortid');
 var TIMES = 100000;
 
 var config = {
-  url:'mongodb://127.0.0.1:27017'
+  url:'mongodb://127.0.0.1:27017',
+  internalReconnectionPolicy:false
 };
 
 DataStore.create(config, function(e, store){

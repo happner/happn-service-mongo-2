@@ -1,7 +1,7 @@
 {
   "name": "happn-service-mongo-2",
   "description": "service plugin for running happn on a mongo database, for happn-3 instances",
-  "version": "2.0.0-alpha.2",
+  "version": "2.0.0-alpha.3",
   "main": "./lib/index",
   "scripts": {
     "test": "mocha silence.js test",
@@ -21,7 +21,7 @@
     "async": "1.5.2",
     "bluebird": "2.10.2",
     "happn-logger": "0.0.1",
-    "mongodb": "2.2.34",
+    "mongodb": "^3.0.1",
     "parse-mongo-url": "1.1.1",
     "redis-lru-cache": "0.1.0",
     "sift": "3.2.6",

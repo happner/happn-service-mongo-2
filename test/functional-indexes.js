@@ -198,9 +198,11 @@ describe('indexes-tests', function () {
     var  mongodb = require('mongodb')
       ,  mongoclient = mongodb.MongoClient;
 
-    mongoclient.connect ("mongodb://127.0.0.1:27017/indexes_configured_test_db",{}, function (err, database) {
+    mongoclient.connect ("mongodb://127.0.0.1:27017",{}, function (err, client) {
 
       if (err) return callback(err);
+
+      var database = client.db('indexes_configured_test_db');
 
       var collection = database.collection("indexes_configured_test_db_coll");
 
