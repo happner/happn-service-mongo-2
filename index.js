@@ -191,8 +191,7 @@ MongoProvider.prototype.upsert = function(path, setData, options, dataWasMerged,
       if (err) return callback(err);
 
       callback(null, response, setParameters.$set, false, _this.__getMeta(response));
-
-    }.bind(_this));
+    });
   }
 
   if (options.upsertType === _this.UPSERT_TYPE.update){
@@ -202,17 +201,29 @@ MongoProvider.prototype.upsert = function(path, setData, options, dataWasMerged,
       if (err) return callback(err);
 
       callback(null, response, response, false, _this.__getMeta(response));
-
-    }.bind(_this));
+    });
   }
 
   _this.db.findAndModify({'path': path}, setParameters, function (err, response) {
 
-    if (err) return callback(err);
+    if (err) {
+
+      if (err.toString().indexOf('duplicate key error collection') > -1) {
+
+        //1 retry - as mongo doesn't seem to understand upsert:true on a unique index means...
+        return _this.db.findAndModify({'path': path}, setParameters, function (err, response) {
+
+          if (err) return callback(err);
+
+          callback(null, response, response, true, _this.__getMeta(response));
+        });
+      }
+
+      return callback(err);
+    }
 
     callback(null, response, response, true, _this.__getMeta(response));
-
-  }.bind(_this));
+  });
 };
 
 MongoProvider.prototype.remove = function(path, callback){

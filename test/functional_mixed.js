@@ -1,4 +1,4 @@
-describe('happn-tests', function () {
+describe('mixed-tests', function () {
 
   var expect = require('expect.js');
   var happn = require('happn-3');
@@ -68,6 +68,7 @@ describe('happn-tests', function () {
       services:{
         data:{
           config:{
+            autoUpdateDBVersion: true,
             datastores:[
               {
                 name:'mongo',

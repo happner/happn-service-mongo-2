@@ -24,6 +24,12 @@
 - updated index to push creation log to database, system also checks if index previously created
 - index tests
 
+2.0.0 2018-04-03
+----------------
+- findAndModify fails on unique index, documented mongo behaviour - have retry in place
+- removed unecessary binds on upsert methods
+- updated mongodb dependancy
+
 
 
 
