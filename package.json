@@ -38,7 +38,7 @@
     "coveralls": "^2.11.6",
     "expect.js": "*",
     "gulp": "^3.9.0",
-    "happn-3": "6.0.0-beta.6",
+    "happn-3": "latest",
     "happn-tests-2": "latest",
     "istanbul": "^0.4.1",
     "mocha": "3.4.2",
