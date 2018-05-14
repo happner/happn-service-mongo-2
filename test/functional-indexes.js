@@ -111,18 +111,28 @@ describe('indexes-tests', function () {
     }
   });
 
-  after(function (done) {
-    if (defaultHappnInstance) defaultHappnInstance.stop(done);
-    else done();
-  });
-
-  after(function (done) {
-    if (indexedHappnInstance) indexedHappnInstance.stop(done);
-    else done();
-  });
-
   var defaultclient;
   var indexedclient;
+
+  after(function (done) {
+    if (defaultclient) defaultclient.disconnect({reconnect:false}, done);
+    else done();
+  });
+
+  after(function (done) {
+    if (indexedclient) indexedclient.disconnect({reconnect:false},done);
+    else done();
+  });
+
+  after(function (done) {
+    if (defaultHappnInstance) defaultHappnInstance.stop({reconnect:false}, done);
+    else done();
+  });
+
+  after(function (done) {
+    if (indexedHappnInstance) indexedHappnInstance.stop({reconnect:false},done);
+    else done();
+  });
 
   /*
    We are initializing 2 clients to test saving data against the database, one client will push data into the
@@ -217,7 +227,7 @@ describe('indexes-tests', function () {
         }
 
         expect(uniqueFound).to.be(true);
-        done();
+        client.close(done);
       });
     });
   });

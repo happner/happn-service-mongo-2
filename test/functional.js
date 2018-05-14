@@ -366,4 +366,67 @@ describe('happn-service-mongo functional tests', function() {
       }
     );
   });
+
+  it('increments a data point', function(done){
+
+    var async = require('async');
+
+    var test_string = require('shortid').generate();
+    var test_base_url = '/increment/' + testId + '/' + test_string;
+
+    async.timesSeries(10, function (time, timeCB) {
+
+      //path, counterName, options, callback
+      serviceInstance.increment(test_base_url, 'counter', 1, timeCB);
+
+    }, function (e) {
+
+      if (e) return done(e);
+
+      serviceInstance.find(test_base_url, {}, function (e, result) {
+
+        if (e) return done(e);
+
+        expect(result[0].data.counter.value).to.be(10);
+
+        done();
+      });
+    });
+  });
+
+  it('increments a data point, multiple guages', function(done){
+
+    var async = require('async');
+
+    var test_string = require('shortid').generate();
+    var test_base_url = '/increment/' + testId + '/' + test_string;
+
+    async.timesSeries(10, function (time, timeCB) {
+
+      //path, counterName, options, callback
+      serviceInstance.increment(test_base_url, 'counter-' + time, 1, timeCB);
+
+    }, function (e) {
+
+      if (e) return done(e);
+
+      serviceInstance.find(test_base_url, {}, function (e, result) {
+
+        if (e) return done(e);
+
+        expect(result[0].data['counter-0'].value).to.be(1);
+        expect(result[0].data['counter-1'].value).to.be(1);
+        expect(result[0].data['counter-2'].value).to.be(1);
+        expect(result[0].data['counter-3'].value).to.be(1);
+        expect(result[0].data['counter-4'].value).to.be(1);
+        expect(result[0].data['counter-5'].value).to.be(1);
+        expect(result[0].data['counter-6'].value).to.be(1);
+        expect(result[0].data['counter-7'].value).to.be(1);
+        expect(result[0].data['counter-8'].value).to.be(1);
+        expect(result[0].data['counter-9'].value).to.be(1);
+
+        done();
+      });
+    });
+  });
 });

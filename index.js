@@ -197,6 +197,11 @@ MongoProvider.prototype.__getMeta = function(response){
   return meta;
 };
 
+MongoProvider.prototype.increment = function(path, counterName, increment, callback){
+
+  return this.db.increment(path, counterName, increment, callback);
+};
+
 MongoProvider.prototype.upsert = function(path, setData, options, dataWasMerged, callback){
 
   var _this = this;
