@@ -366,4 +366,31 @@ describe('happn-service-mongo functional tests', function() {
       }
     );
   });
+
+  it('increments a data point', function(done){
+
+    var async = require('async');
+
+    var test_string = require('shortid').generate();
+    var test_base_url = '/increment/' + testId + '/' + test_string;
+
+    async.timesSeries(10, function (time, timeCB) {
+
+      //path, counterName, options, callback
+      serviceInstance.increment(test_base_url, 'counter', 1, timeCB);
+
+    }, function (e) {
+
+      if (e) return done(e);
+
+      serviceInstance.find(test_base_url, {}, function (e, result) {
+
+        if (e) return done(e);
+
+        expect(result[0].data.counter.value).to.be(10);
+
+        done();
+      });
+    });
+  });
 });

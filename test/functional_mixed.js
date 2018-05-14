@@ -49,7 +49,7 @@ describe('mixed-tests', function () {
     } catch (e) {
       callback(e);
     }
-  }
+  };
 
   var db_path = path.resolve(__dirname.replace('test',''))  + path.sep + 'index.js';
 
@@ -1247,7 +1247,7 @@ describe('mixed-tests', function () {
 
   });
 
-  it('will do events in the order they are passed', function (done) {
+  xit('will do events in the order they are passed', function (done) {
     publisherclient.set('/test_event_order', {property1: 'property1Value'}, {}, function () {
       publisherclient.log.info('Done setting');
     });
