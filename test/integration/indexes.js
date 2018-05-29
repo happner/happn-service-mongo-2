@@ -1,4 +1,6 @@
-describe('indexes-tests', function () {
+var filename = require('path').basename(__filename);
+
+describe('integration/' + filename + '\n', function () {
 
   var expect = require('expect.js');
   var happn = require('happn-3');
@@ -15,7 +17,7 @@ describe('indexes-tests', function () {
 
   this.timeout(5000);
 
-  var db_path = path.resolve(__dirname.replace('test',''))  + path.sep + 'index.js';
+  var db_path = path.resolve(__dirname.replace('test/integration',''))  + path.sep + 'index.js';
 
   var defaultConfig = {
     port:55001,

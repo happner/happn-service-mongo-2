@@ -26,11 +26,16 @@
 
 2.0.0 2018-04-03
 ----------------
-- findAndModify fails on unique index, documented mongo behaviour - have retry in place
-- removed unecessary binds on upsert methods
-- updated mongodb dependancy
+- findAndModify fails on unique index, documented mongo behavior - have retry in place
+- removed unnecessary binds on upsert methods
+- updated mongodb dependency
 
+2.1.0 2018-05-14
+----------------
+- increment functionality and tests
+- removed archived tests
 
-
-
-
+2.1.1 2018-05-29
+----------------
+- concurrent upsert tests
+- generalized check for unique constraint error on upsert to just 'duplicate key'
