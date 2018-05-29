@@ -1,10 +1,12 @@
-describe('happn-service-mongo functional tests', function() {
+var filename = require('path').basename(__filename);
+
+describe('integration/' + filename + '\n', function () {
 
   this.timeout(20000);
 
   var expect = require('expect.js');
 
-  var service = require('../index');
+  var service = require('../../index');
 
   var testId = require('shortid').generate();
 

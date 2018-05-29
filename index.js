@@ -247,9 +247,8 @@ MongoProvider.prototype.upsert = function(path, setData, options, dataWasMerged,
 
     if (err) {
 
-      if (err.toString().indexOf('duplicate key error collection') > -1) {
-
-        //1 retry - as mongo doesn't seem to understand upsert:true on a unique index means...
+      if (err.message.indexOf('duplicate key') > -1) {
+        //1 retry - as mongo doesn't seem to understand how upsert:true on a unique index should work...
         return _this.db.findAndModify({'path': path}, setParameters, function (err, response) {
 
           if (err) return callback(err);

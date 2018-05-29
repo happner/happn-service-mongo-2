@@ -1,10 +1,12 @@
-describe('happn-service-mongo replica url tests', function () {
+var filename = require('path').basename(__filename);
+
+describe('integration/' + filename + '\n', function () {
 
   this.timeout(20000);
 
   var expect = require('expect.js');
 
-  var service = require('../index');
+  var service = require('../../index');
 
   var fullUrl = 'mongodb://username:password@127.0.0.1:27017,127.0.0.1:27018,127.0.0.1:27019/happn?replicaSet=test-set&ssl=true&authSource=admin';
 

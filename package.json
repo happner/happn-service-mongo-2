@@ -1,12 +1,12 @@
 {
   "name": "happn-service-mongo-2",
   "description": "service plugin for running happn on a mongo database, for happn-3 instances",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "main": "./lib/index",
   "scripts": {
-    "test": "mocha silence.js test",
-    "test-cover": "istanbul cover _mocha -- silence.js test",
-    "happn-tests": "node test/happn-test",
+    "test": "mocha silence.js test/integration/**",
+    "test-cover": "istanbul cover _mocha -- silence.js test/integration/** test/unit/**",
+    "happn-tests": "node test/integration/happn*",
     "test-release": "rm -rf node_modules && rm -f package-lock.json && npm install && npm test"
   },
   "keywords": [

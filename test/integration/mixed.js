@@ -1,4 +1,6 @@
-describe('happn-tests', function () {
+var filename = require('path').basename(__filename);
+//both mongo and nedb on same instance
+describe('integration/' + filename + '\n', function () {
 
   var expect = require('expect.js');
   var happn = require('happn-3');
@@ -9,21 +11,106 @@ describe('happn-tests', function () {
   var happnInstance = null;
   var test_id;
   var path = require('path');
+  var fs = require('fs');
 
   this.timeout(5000);
 
-  var db_path = path.resolve(__dirname.replace('test',''))  + path.sep + 'index.js';
+  var findRecordInDataFile = function (path, filepath, callback) {
+
+    try {
+
+      setTimeout(function () {
+
+        var fs = require('fs'), byline = require('byline');
+        var stream = byline(fs.createReadStream(filepath, {encoding: 'utf8'}));
+        var found = false;
+
+        stream.on('data', function (line) {
+
+          if (found) return;
+
+          var record = JSON.parse(line);
+
+          if (record._id == path) {
+            found = true;
+            stream.end();
+            return callback(null, record);
+          }
+
+        });
+
+        stream.on('end', function () {
+
+          if (!found)
+            callback(null, null);
+
+        });
+
+      }, 1000)
+
+    } catch (e) {
+      callback(e);
+    }
+  };
+
+  var db_path = path.resolve(__dirname.replace('test/integration',''))  + path.sep + 'index.js';
+
+  var db_local_file_path = __dirname + path.sep + 'tmp' + path.sep + 'functional_mixed.nedb';
+
+  try{
+    fs.unlinkSync(db_local_file_path);
+  }catch(e){
+
+    var errorMessage = e.toString();
+    console.warn('didn\'t unlink test file: ' + errorMessage);
+  }
+
+  var happnerConfig = {
+    happn:{
+      services:{
+        data:{
+          config:{
+            autoUpdateDBVersion: true,
+            datastores:[
+              {
+                name:'mongo',
+                provider:'happn-service-mongo-2',
+                isDefault:true
+              },
+              {
+                name:'nedb',
+                settings:{
+                  filename:db_local_file_path
+                },
+                patterns:[
+                  '/mesh/schema/*'
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  };
 
   var config = {
     services:{
       data:{
         config:{
-          autoUpdateDBVersion: true,
           datastores:[
             {
               name:'mongo',
               provider:db_path,
               isDefault:true
+            },
+            {
+              name:'nedb',
+              settings:{
+                filename:db_local_file_path
+              },
+              patterns:[
+                '/LOCAL/*'
+              ]
             }
           ]
         }
@@ -87,12 +174,13 @@ describe('happn-tests', function () {
     }
   });
 
-  it('the publisher should set new data', function (callback) {
+  it('the publisher should set local new data', function (callback) {
 
     try {
       var test_path_end = require('shortid').generate();
 
-      publisherclient.set('1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/' + test_path_end, {
+      publisherclient.set('/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/' + test_path_end, {
+
         property1: 'property1',
         property2: 'property2',
         property3: 'property3'
@@ -101,12 +189,20 @@ describe('happn-tests', function () {
       }, function (e, result) {
 
         if (!e) {
-          publisherclient.get('1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/' + test_path_end, null, function (e, results) {
+
+          publisherclient.get('/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/' + test_path_end, null, function (e, results) {
 
             expect(results.property1 == 'property1').to.be(true);
             expect(results.created == results.modified).to.be(true);
 
-            callback(e);
+            findRecordInDataFile('/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/' + test_path_end, db_local_file_path, function(e, record){
+
+              if (e) return callback(e);
+
+              if (!record) return callback('record not found in data file: ' + db_local_file_path);
+
+              callback();
+            });
           });
         } else
           callback(e);
@@ -117,27 +213,27 @@ describe('happn-tests', function () {
     }
   });
 
-  it('the listener should pick up a single wildcard event', function (callback) {
+  it('the listener should pick up a single wildcard event, locally', function (callback) {
 
     try {
 
       //first listen for the change
-      listenerclient.on('/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event/*', {
+      listenerclient.on('/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event/*', {
         event_type: 'set',
         count: 1
       }, function (message) {
 
-        expect(listenerclient.events['/SET@/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event/*'].length).to.be(0);
+        expect(listenerclient.events['/SET@/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event/*'].length).to.be(0);
         callback();
 
       }, function (e) {
 
         if (!e) {
 
-          expect(listenerclient.events['/SET@/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event/*'].length).to.be(1);
+          expect(listenerclient.events['/SET@/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event/*'].length).to.be(1);
 
           //then make the change
-          publisherclient.set('/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event/blah', {
+          publisherclient.set('/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event/blah', {
             property1: 'property1',
             property2: 'property2',
             property3: 'property3'
@@ -157,7 +253,7 @@ describe('happn-tests', function () {
 
 
     var test_path_end = require('shortid').generate();
-    publisherclient.get('1_eventemitter_embedded_sanity/' + test_id + '/unfound/exact/' + test_path_end, null, function (e, results) {
+    publisherclient.get('/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/unfound/exact/' + test_path_end, null, function (e, results) {
       ////////////console.log('new data results');
 
       expect(e).to.be(null);
@@ -172,7 +268,7 @@ describe('happn-tests', function () {
 
     var timesCount = 10;
 
-    var testBasePath = '/1_eventemitter_embedded_sanity/' + test_id + '/set_multiple'
+    var testBasePath = '/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/set_multiple'
 
     try {
 
@@ -310,32 +406,23 @@ describe('happn-tests', function () {
   });
 
   it('should contain the same payload between a merge and a normal store for first store', function (done) {
-
-    var shortid = require('shortid').generate();
-
     var object = {param1: 10, param2: 20};
     var firstTime = true;
 
-    listenerclient.on('mergeTest5/object/*', {event_type: 'set', count: 2}, function (message, meta) {
+    listenerclient.on('mergeTest/object', {event_type: 'set', count: 2}, function (message, meta) {
 
       expect(message).to.eql(object);
-
       if (firstTime) {
         firstTime = false;
         return;
       }
       done();
     }, function (err) {
-
-      if (err) return done(err);
-
-      publisherclient.set('mergeTest5/object/' + shortid, object, {merge: true}, function (err) {
-
-        if (err) return done(err);
-
-        publisherclient.set('mergeTest5/object/' + shortid, object, {merge: true}, function (err) {
-
-          if (err) return done(err);
+      expect(err).to.not.be.ok();
+      publisherclient.set('mergeTest/object', object, {merge: true}, function (err) {
+        expect(err).to.not.be.ok();
+        publisherclient.set('mergeTest/object', object, {merge: true}, function (err) {
+          expect(err).to.not.be.ok();
         });
       });
     })
@@ -1159,217 +1246,24 @@ describe('happn-tests', function () {
         expect(e).to.not.be.ok();
       });
     });
+
   });
 
-  it('increments a value on a path', function (done) {
-
-    var async = require('async');
-
-    var test_string = require('shortid').generate();
-    var test_base_url = '/increment/' + test_id + '/' + test_string;
-
-    async.timesSeries(10, function (time, timeCB) {
-
-      publisherclient.set(test_base_url, 'counter', {increment: 1, noPublish: true}, function (e, result) {
-
-        timeCB(e);
-      });
-
-    }, function (e) {
-
-      if (e) return done(e);
-
-      listenerclient.get(test_base_url, function (e, result) {
-
-        if (e) return done(e);
-
-        expect(result.counter.value).to.be(10);
-
-        done();
-      });
+  xit('will do events in the order they are passed', function (done) {
+    publisherclient.set('/test_event_order', {property1: 'property1Value'}, {}, function () {
+      publisherclient.log.info('Done setting');
     });
-  });
-
-  it('increments a value on a path, multiple guages', function (done) {
-
-    var async = require('async');
-
-    var test_string = require('shortid').generate();
-    var test_base_url = '/increment/' + test_id + '/' + test_string;
-
-    async.timesSeries(10, function (time, timeCB) {
-
-      publisherclient.set(test_base_url, 'counter-' + time, {increment: 1, noPublish: true}, function (e) {
-
-        timeCB(e);
-      });
-
-    }, function (e) {
-
-      if (e) return done(e);
-
-      listenerclient.get(test_base_url, function (e, result) {
-
-        if (e) return done(e);
-
-        expect(result['counter-0'].value).to.be(1);
-        expect(result['counter-1'].value).to.be(1);
-        expect(result['counter-2'].value).to.be(1);
-        expect(result['counter-3'].value).to.be(1);
-        expect(result['counter-4'].value).to.be(1);
-        expect(result['counter-5'].value).to.be(1);
-        expect(result['counter-6'].value).to.be(1);
-        expect(result['counter-7'].value).to.be(1);
-        expect(result['counter-8'].value).to.be(1);
-        expect(result['counter-9'].value).to.be(1);
-
-        done();
-      });
-    });
-  });
-
-  it('increments a value on a path, convenience method, multiple guages', function (done) {
-
-    var async = require('async');
-
-    var test_string = require('shortid').generate();
-    var test_base_url = '/increment/' + test_id + '/' + test_string;
-
-    async.timesSeries(10, function (time, timeCB) {
-
-      publisherclient.increment(test_base_url, 'counter-' + time, 1, function (e) {
-
-        timeCB(e);
-      });
-
-    }, function (e) {
-
-      if (e) return done(e);
-
-      listenerclient.get(test_base_url, function (e, result) {
-
-        if (e) return done(e);
-
-        expect(result['counter-0'].value).to.be(1);
-        expect(result['counter-1'].value).to.be(1);
-        expect(result['counter-2'].value).to.be(1);
-        expect(result['counter-3'].value).to.be(1);
-        expect(result['counter-4'].value).to.be(1);
-        expect(result['counter-5'].value).to.be(1);
-        expect(result['counter-6'].value).to.be(1);
-        expect(result['counter-7'].value).to.be(1);
-        expect(result['counter-8'].value).to.be(1);
-        expect(result['counter-9'].value).to.be(1);
-
-        done();
-      });
-    });
-  });
-
-  it('increments a value on a path, convenience method, listens on path receives event', function (done) {
-
-    var test_string = require('shortid').generate();
-    var test_base_url = '/increment/convenience/' + test_id + '/' + test_string;
-
-    listenerclient.on(test_base_url, function (data) {
-
-      expect(data.value).to.be(1);
-      expect(data.guage).to.be('counter');
-
-      done();
-
-    }, function (e) {
-
-      if (e) return done(e);
-
-      publisherclient.increment(test_base_url, 1, function (e) {
-
-        if (e) return done(e);
-      });
-    });
-  });
-
-  it('increments a value on a path, convenience method with custom guage and increment, listens on path receives event', function (done) {
-
-    var test_string = require('shortid').generate();
-    var test_base_url = '/increment/convenience/' + test_id + '/' + test_string;
-
-    listenerclient.on(test_base_url, function (data) {
-
-      expect(data.value).to.be(3);
-      expect(data.guage).to.be('custom');
-
-      done();
-
-    }, function (e) {
-
-      if (e) return done(e);
-
-      publisherclient.increment(test_base_url, 'custom', 3, function (e) {
-
-        if (e) return done(e);
-      });
-    });
-  });
-
-  it('increments and decrements a value on a path, convenience method with custom guage and increment and decrement, listens on path receives event', function (done) {
-
-    var test_string = require('shortid').generate();
-    var test_base_url = '/increment/convenience/' + test_id + '/' + test_string;
-
-    var incrementCount = 0;
-
-    listenerclient.on(test_base_url, function (data) {
-
-      incrementCount++;
-
-      if (incrementCount == 1){
-        expect(data.value).to.be(3);
-        expect(data.guage).to.be('custom');
-      }
-
-      if (incrementCount == 2){
-        expect(data.value).to.be(1);
-        expect(data.guage).to.be('custom');
-        done();
-      }
-
-    }, function (e) {
-
-      if (e) return done(e);
-
-      publisherclient.increment(test_base_url, 'custom', 3, function (e) {
-
-        if (e) return done(e);
-
-        publisherclient.increment(test_base_url, 'custom', -2, function (e) {
-
-          if (e) return done(e);
+    publisherclient.remove('/test_event_order', function (err) {
+      publisherclient.log.info('Done removing');
+      setTimeout(function () {
+        publisherclient.get('/test_event_order', null, function (e, result) {
+          expect(result).to.be(null);
+          done();
         });
-      });
+      }, 1000);
     });
   });
 
-  it('increments a value on a path, convenience method, no counter so defaults to 1, listens on path receives event', function (done) {
+  //require('benchmarket').stop();
 
-    var test_string = require('shortid').generate();
-    var test_base_url = '/increment/convenience/' + test_id + '/' + test_string;
-
-    listenerclient.on(test_base_url, function (data) {
-
-      expect(data.value).to.be(1);
-      expect(data.guage).to.be('counter');
-
-      done();
-
-    }, function (e) {
-
-      if (e) return done(e);
-
-      publisherclient.increment(test_base_url, function (e) {
-
-        if (e) return done(e);
-      });
-    });
-  });
 });
