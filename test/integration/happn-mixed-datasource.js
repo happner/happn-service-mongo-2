@@ -1,19 +1,61 @@
-var filename = require('path').basename(__filename);
-//both mongo and nedb on same instance
-describe('integration/' + filename + '\n', function () {
-
-  var expect = require('expect.js');
-  var happn = require('happn-3');
-  var service = happn.service;
-  var async = require('async');
-  var test_secret = 'test_secret';
-  var mode = "embedded";
-  var happnInstance = null;
-  var test_id;
-  var path = require('path');
-  var fs = require('fs');
+describe('happn-tests, mixed datasource', function() {
 
   this.timeout(5000);
+
+  let expect = require('expect.js');
+  let happn = require('happn-3');
+  let service = happn.service;
+  let async = require('async');
+  let test_secret = 'test_secret';
+  let mode = "embedded";
+  let happnInstance = null;
+  let test_id;
+  let path = require('path');
+  var happnTestHelper;
+
+  var publisherclient;
+  var listenerclient;
+
+  const TEST_COLLECTION_NAME = 'happn-service-mongo-2-tests';
+  const db_path = path.resolve(__dirname.replace('test/integration', '')) + path.sep + 'index.js';
+  const db_local_file_path = __dirname + path.sep + 'tmp' + path.sep + 'functional_mixed.nedb';
+  const config = {
+    services:{
+      data:{
+        config:{
+          datastores:[
+            {
+              name:'mongo',
+              provider:db_path,
+              isDefault:true,
+              collection:TEST_COLLECTION_NAME
+            },
+            {
+              name:'nedb',
+              settings:{
+                filename:db_local_file_path
+              },
+              patterns:[
+                '/LOCAL/*'
+              ]
+            }
+          ]
+        }
+      }
+    }
+  };
+
+  before('should initialize the service and clients', async () => {
+    test_id = Date.now() + '_' + require('shortid').generate();
+    happnTestHelper = require('../__fixtures/happn-test-helper').create(config);
+    await happnTestHelper.initialize();
+    publisherclient = happnTestHelper.publisherclient;
+    listenerclient = happnTestHelper.listenerclient;
+  });
+
+  after(async () => {
+    await happnTestHelper.tearDown();
+  })
 
   var findRecordInDataFile = function (path, filepath, callback) {
 
@@ -36,143 +78,16 @@ describe('integration/' + filename + '\n', function () {
             stream.end();
             return callback(null, record);
           }
-
         });
 
         stream.on('end', function () {
-
-          if (!found)
-            callback(null, null);
-
+          if (!found) callback(null, null);
         });
-
       }, 1000)
-
     } catch (e) {
       callback(e);
     }
   };
-
-  var db_path = path.resolve(__dirname.replace('test/integration',''))  + path.sep + 'index.js';
-
-  var db_local_file_path = __dirname + path.sep + 'tmp' + path.sep + 'functional_mixed.nedb';
-
-  try{
-    fs.unlinkSync(db_local_file_path);
-  }catch(e){
-
-    var errorMessage = e.toString();
-    console.warn('didn\'t unlink test file: ' + errorMessage);
-  }
-
-  var happnerConfig = {
-    happn:{
-      services:{
-        data:{
-          config:{
-            autoUpdateDBVersion: true,
-            datastores:[
-              {
-                name:'mongo',
-                provider:'happn-service-mongo-2',
-                isDefault:true
-              },
-              {
-                name:'nedb',
-                settings:{
-                  filename:db_local_file_path
-                },
-                patterns:[
-                  '/mesh/schema/*'
-                ]
-              }
-            ]
-          }
-        }
-      }
-    }
-  };
-
-  var config = {
-    services:{
-      data:{
-        config:{
-          datastores:[
-            {
-              name:'mongo',
-              provider:db_path,
-              isDefault:true
-            },
-            {
-              name:'nedb',
-              settings:{
-                filename:db_local_file_path
-              },
-              patterns:[
-                '/LOCAL/*'
-              ]
-            }
-          ]
-        }
-      }
-    }
-  };
-
-  before('should initialize the service', function (callback) {
-
-    test_id = Date.now() + '_' + require('shortid').generate();
-
-    try {
-
-      service.create(config,
-
-        function (e, happnInst) {
-
-          if (e) return callback(e);
-
-          happnInstance = happnInst;
-
-          callback();
-        });
-    } catch (e) {
-      callback(e);
-    }
-  });
-
-  after(function (done) {
-    happnInstance.stop(done);
-  });
-
-
-  var publisherclient;
-  var listenerclient;
-
-  /*
-   We are initializing 2 clients to test saving data against the database, one client will push data into the
-   database whilst another listens for changes.
-   */
-  before('should initialize the clients', function (callback) {
-
-    try {
-
-      happnInstance.services.session.localClient(function(e, instance){
-
-        if (e) return callback(e);
-        publisherclient = instance;
-
-        happnInstance.services.session.localClient(function(e, instance){
-
-          if (e) return callback(e);
-          listenerclient = instance;
-
-          callback();
-        });
-      });
-
-    } catch (e) {
-      callback(e);
-    }
-  });
 
   it('the publisher should set local new data', function (callback) {
 
@@ -223,14 +138,14 @@ describe('integration/' + filename + '\n', function () {
         count: 1
       }, function (message) {
 
-        expect(listenerclient.events['/SET@/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event/*'].length).to.be(0);
+        expect(listenerclient.state.events['/SET@/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event/*']).to.be(undefined);
         callback();
 
       }, function (e) {
 
         if (!e) {
 
-          expect(listenerclient.events['/SET@/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event/*'].length).to.be(1);
+          expect(listenerclient.state.events['/SET@/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event/*'].length).to.be(1);
 
           //then make the change
           publisherclient.set('/LOCAL/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event/blah', {
@@ -427,40 +342,6 @@ describe('integration/' + filename + '\n', function () {
       });
     })
   });
-
-
-  // it('should contain the same payload between a merge and a normal store for first store', function (done) {
-  //   var object = {
-  //     param1: 10,
-  //     param2: 20
-  //   };
-  //   var firstTime = true;
-  //
-  //   listenerclient.on('mergeTest/object', {
-  //     event_type: 'set',
-  //     count: 2
-  //   }, function (message) {
-  //     expect(message).to.eql(object);
-  //     if (firstTime) {
-  //       firstTime = false;
-  //       return;
-  //     }
-  //     done();
-  //   }, function (err) {
-  //     expect(err).to.not.be.ok();
-  //     publisherclient.set('mergeTest/object', object, {
-  //       merge: true
-  //     }, function (err) {
-  //       expect(err).to.not.be.ok();
-  //       publisherclient.set('mergeTest/object', object, {
-  //         merge: true
-  //       }, function (err) {
-  //         expect(err).to.not.be.ok();
-  //       });
-  //     });
-  //   })
-  // });
-
 
   it('should search for a complex object', function (callback) {
 
@@ -786,7 +667,7 @@ describe('integration/' + filename + '\n', function () {
         count: 1
       }, function (message) {
 
-        expect(listenerclient.events['/SET@/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event'].length).to.be(0);
+        expect(listenerclient.state.events['/SET@/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event']).to.be(undefined);
         callback();
 
       }, function (e) {
@@ -795,7 +676,7 @@ describe('integration/' + filename + '\n', function () {
 
         if (!e) {
 
-          expect(listenerclient.events['/SET@/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event'].length).to.be(1);
+          expect(listenerclient.state.events['/SET@/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event'].length).to.be(1);
           //////////////////console.log('on subscribed, about to publish');
 
           //then make the change
@@ -933,14 +814,14 @@ describe('integration/' + filename + '\n', function () {
         count: 1
       }, function (message) {
 
-        expect(listenerclient.events['/SET@/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event'].length).to.be(0);
+        expect(listenerclient.state.events['/SET@/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event']).to.be(undefined);
         callback();
 
       }, function (e) {
 
         if (!e) {
 
-          expect(listenerclient.events['/SET@/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event'].length).to.be(1);
+          expect(listenerclient.state.events['/SET@/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/event'].length).to.be(1);
 
           ////////////////////////////console.log('on subscribed, about to publish');
 
@@ -1038,7 +919,7 @@ describe('integration/' + filename + '\n', function () {
       }, function (eventData) {
         //we are looking at the event internals on the listener to ensure our event management is working - because we are only listening for 1
         //instance of this event - the event listener should have been removed
-        expect(listenerclient.events['/REMOVE@/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/delete_me'].length).to.be(0);
+        expect(listenerclient.state.events['/REMOVE@/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/delete_me']).to.be(undefined);
 
         //we needed to have removed a single item
         expect(eventData.payload.removed).to.be(1);
@@ -1049,7 +930,7 @@ describe('integration/' + filename + '\n', function () {
 
         if (!e) return callback(e);
 
-        expect(listenerclient.events['/REMOVE@/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/delete_me'].length).to.be(1);
+        expect(listenerclient.state.events['/REMOVE@/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/delete_me'].length).to.be(1);
 
         //We perform the actual delete
         publisherclient.remove('/1_eventemitter_embedded_sanity/' + test_id + '/testsubscribe/data/delete_me', null, function (e, result) {
@@ -1246,24 +1127,5 @@ describe('integration/' + filename + '\n', function () {
         expect(e).to.not.be.ok();
       });
     });
-
   });
-
-  xit('will do events in the order they are passed', function (done) {
-    publisherclient.set('/test_event_order', {property1: 'property1Value'}, {}, function () {
-      publisherclient.log.info('Done setting');
-    });
-    publisherclient.remove('/test_event_order', function (err) {
-      publisherclient.log.info('Done removing');
-      setTimeout(function () {
-        publisherclient.get('/test_event_order', null, function (e, result) {
-          expect(result).to.be(null);
-          done();
-        });
-      }, 1000);
-    });
-  });
-
-  //require('benchmarket').stop();
-
 });
