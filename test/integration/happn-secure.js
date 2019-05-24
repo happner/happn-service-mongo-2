@@ -1,4 +1,4 @@
-describe('happn-tests', function() {
+describe('happn-tests, secure', function() {
 
   this.timeout(5000);
 
@@ -19,6 +19,7 @@ describe('happn-tests', function() {
   const TEST_COLLECTION_NAME = 'happn-service-mongo-2-tests';
   const db_path = path.resolve(__dirname.replace('test/integration', '')) + path.sep + 'index.js';
   const config = {
+    secure:true,
     services: {
       data: {
         config: {

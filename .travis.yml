@@ -1,8 +1,9 @@
 language: node_js
 sudo: required
 node_js:
+  - "11"
+  - "10"
   - "8"
-  - "6"
 env:
 - NODE_TLS_REJECT_UNAUTHORIZED=0
 script: "npm test"

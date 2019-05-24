@@ -39,3 +39,9 @@
 ----------------
 - concurrent upsert tests
 - generalized check for unique constraint error on upsert to just 'duplicate key'
+
+2.2.0 2019-05-24
+----------------
+- $regex filter tests introduced
+- cleaned up code, using let instead of var, refactored to remove \_this where possible
+- improved test coverage and test helper for happn tests
