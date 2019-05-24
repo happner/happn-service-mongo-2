@@ -64,7 +64,7 @@ MongoProvider.prototype.__createIndexes = function(config, callback){
         if (found) return indexCB();
         let  indexConfig = config.index[indexKey];
 
-        this.db.data.createIndex(indexConfig.fields, indexConfig.options, function(e, result){
+        this.db.data.createIndex(indexConfig.fields, indexConfig.options, (e, result) => {
           if (e) return indexCB(e);
           this.upsert('/_SYSTEM/INDEXES/' + indexKey, { data: indexConfig, creation_result:result }, {}, false, indexCB);
         });
