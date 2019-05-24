@@ -1419,4 +1419,109 @@ describe('happn-tests', function() {
     expect(allResults.length).to.eql(foundPages.length);
     expect(allResults).to.eql(foundPages);
   });
+
+  it('can get using criteria, $regex with params in array', function(done) {
+
+    publisherclient.set('/regex/test/1', {
+        name: 'Loadtest_123',
+        anotherProp: 'anotherPropValue'
+      },
+      function(e, result) {
+
+        if (e) return done(e);
+
+        var options = {
+          fields: {
+            "name": 1
+          }
+        };
+
+        var criteria = {
+          "name": {
+            "$regex": [".*loadtest.*", "i"]
+          }
+        };
+
+        listenerclient.get('/regex/test/*', {
+            criteria: criteria,
+            options: options
+          },
+          function(e, result) {
+            if (e) return done(e);
+            expect(result[0].anotherProp).to.be(undefined);
+            expect(result[0].name).to.be('Loadtest_123');
+            expect(result.length).to.be(1);
+            done();
+          });
+      });
+  });
+
+  it('can get using criteria, $regex as string', function(done) {
+
+    publisherclient.set('/regex/test/1', {
+        name: 'Loadtest_123',
+        anotherProp: 'anotherPropValue'
+      },
+      function(e, result) {
+
+        if (e) return done(e);
+
+        var options = {
+          fields: {
+            "name": 1
+          }
+        };
+
+        var criteria = {
+          "name": {
+            "$regex": ".*Loadtest.*"
+          }
+        };
+
+        listenerclient.get('/regex/test/*', {
+            criteria: criteria,
+            options: options
+          },
+          function(e, result) {
+            if (e) return done(e);
+            expect(result[0].anotherProp).to.be(undefined);
+            expect(result[0].name).to.be('Loadtest_123');
+            expect(result.length).to.be(1);
+            done();
+          });
+      });
+  });
+
+  it('can get using criteria, bad $regex as boolean', function(done) {
+
+    publisherclient.set('/regex/test/1', {
+        name: 'Loadtest_123',
+        anotherProp: 'anotherPropValue'
+      },
+      function(e, result) {
+
+        if (e) return done(e);
+
+        var options = {
+          fields: {
+            "name": 1
+          }
+        };
+
+        var criteria = {
+          "name": {
+            "$regex": false
+          }
+        };
+
+        listenerclient.get('/regex/test/*', {
+            criteria: criteria,
+            options: options
+          },
+          function(e, result) {
+            expect(e.toString()).to.be('SystemError: $regex parameter value must be an Array or a string');
+            done();
+          });
+      });
+  });
 });
