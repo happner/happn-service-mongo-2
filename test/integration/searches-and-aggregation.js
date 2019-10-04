@@ -39,10 +39,10 @@ describe("integration/" + filename + "\n", function() {
     });
   });
 
-  function createTestItem(id, group, custom) {
+  function createTestItem(id, group, custom, pathPrefix) {
     return new Promise((resolve, reject) => {
       serviceInstance.upsert(
-        "/searches-and-aggregation/" + id,
+        `${pathPrefix || ''}/searches-and-aggregation/${id}`,
         {
           data: {
             group,
@@ -71,6 +71,8 @@ describe("integration/" + filename + "\n", function() {
     await createTestItem(8, "even", "EVen");
     await createTestItem(9, "odd", "odd");
     await createTestItem(10, "even", "even");
+    await createTestItem(11, "even", "even", "/other");
+    await createTestItem(12, "even", "even", "/other");
   });
 
   after(function(done) {
@@ -78,7 +80,9 @@ describe("integration/" + filename + "\n", function() {
   });
 
   it("tests a normal search", function(callback) {
-    serviceInstance.find("/searches-and-aggregation/*", {}, function(e, items) {
+    serviceInstance.find(
+      "/searches-and-aggregation/*",
+      {}, function(e, items) {
       if (e) return callback(e);
       expect(items.length).to.be(10);
       callback();
