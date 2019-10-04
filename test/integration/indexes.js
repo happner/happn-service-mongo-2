@@ -1,37 +1,34 @@
-var filename = require('path').basename(__filename);
+var filename = require("path").basename(__filename);
 
-describe('integration/' + filename + '\n', function () {
-
-  var expect = require('expect.js');
-  var happn = require('happn-3');
+describe("integration/" + filename + "\n", function() {
+  var expect = require("expect.js");
+  var happn = require("happn-3");
   var service = happn.service;
-  var async = require('async');
-  var test_secret = 'test_secret';
-
   var defaultHappnInstance = null;
-
   var indexedHappnInstance = null;
-
   var test_id;
-  var path = require('path');
+  var path = require("path");
 
   this.timeout(5000);
 
-  var db_path = path.resolve(__dirname.replace('test/integration',''))  + path.sep + 'index.js';
+  var db_path =
+    path.resolve(__dirname.replace("test/integration", "")) +
+    path.sep +
+    "index.js";
 
   var defaultConfig = {
-    port:55001,
-    services:{
-      data:{
-        config:{
+    port: 55001,
+    services: {
+      data: {
+        config: {
           autoUpdateDBVersion: true,
-          datastores:[
+          datastores: [
             {
-              name:'mongo',
-              provider:db_path,
+              name: "mongo",
+              provider: db_path,
               settings: {
-                database: 'indexes_default_test_db',
-                collection: 'indexes_default_test_db_coll'
+                database: "indexes_default_test_db",
+                collection: "indexes_default_test_db_coll"
               }
             }
           ]
@@ -41,26 +38,26 @@ describe('integration/' + filename + '\n', function () {
   };
 
   var indexesConfig = {
-    port:55002,
-    services:{
-      data:{
-        config:{
+    port: 55002,
+    services: {
+      data: {
+        config: {
           autoUpdateDBVersion: true,
-          datastores:[
+          datastores: [
             {
-              name:'mongo',
-              provider:db_path,
+              name: "mongo",
+              provider: db_path,
               settings: {
-                database: 'indexes_configured_test_db',
-                collection:'indexes_configured_test_db_coll',
+                database: "indexes_configured_test_db",
+                collection: "indexes_configured_test_db_coll",
                 index: {
-                  "happn_path_index": {
-                    fields: {path: 1},
-                    options: {unique: true, w: 1}
+                  happn_path_index: {
+                    fields: { path: 1 },
+                    options: { unique: true, w: 1 }
                   },
-                  "another_index": {
-                    fields: {test: 1},
-                    options: {w: 1}
+                  another_index: {
+                    fields: { test: 1 },
+                    options: { w: 1 }
                   }
                 }
               }
@@ -71,43 +68,41 @@ describe('integration/' + filename + '\n', function () {
     }
   };
 
-  before('should initialize the default service', function (callback) {
-
-    test_id = Date.now() + '_' + require('shortid').generate();
+  before("should initialize the default service", function(callback) {
+    test_id = Date.now() + "_" + require("shortid").generate();
 
     try {
+      service.create(
+        defaultConfig,
 
-      service.create(defaultConfig,
-
-        function (e, happnInst) {
-
+        function(e, happnInst) {
           if (e) return callback(e);
 
           defaultHappnInstance = happnInst;
 
           callback();
-        });
+        }
+      );
     } catch (e) {
       callback(e);
     }
   });
 
-  before('should initialize the indexed service', function (callback) {
-
-    test_id = Date.now() + '_' + require('shortid').generate();
+  before("should initialize the indexed service", function(callback) {
+    test_id = Date.now() + "_" + require("shortid").generate();
 
     try {
+      service.create(
+        indexesConfig,
 
-      service.create(indexesConfig,
-
-        function (e, happnInst) {
-
+        function(e, happnInst) {
           if (e) return callback(e);
 
           indexedHappnInstance = happnInst;
 
           callback();
-        });
+        }
+      );
     } catch (e) {
       callback(e);
     }
@@ -116,23 +111,25 @@ describe('integration/' + filename + '\n', function () {
   var defaultclient;
   var indexedclient;
 
-  after(function (done) {
-    if (defaultclient) defaultclient.disconnect({reconnect:false}, done);
+  after(function(done) {
+    if (defaultclient) defaultclient.disconnect({ reconnect: false }, done);
     else done();
   });
 
-  after(function (done) {
-    if (indexedclient) indexedclient.disconnect({reconnect:false},done);
+  after(function(done) {
+    if (indexedclient) indexedclient.disconnect({ reconnect: false }, done);
     else done();
   });
 
-  after(function (done) {
-    if (defaultHappnInstance) defaultHappnInstance.stop({reconnect:false}, done);
+  after(function(done) {
+    if (defaultHappnInstance)
+      defaultHappnInstance.stop({ reconnect: false }, done);
     else done();
   });
 
-  after(function (done) {
-    if (indexedHappnInstance) indexedHappnInstance.stop({reconnect:false},done);
+  after(function(done) {
+    if (indexedHappnInstance)
+      indexedHappnInstance.stop({ reconnect: false }, done);
     else done();
   });
 
@@ -140,64 +137,57 @@ describe('integration/' + filename + '\n', function () {
    We are initializing 2 clients to test saving data against the database, one client will push data into the
    database whilst another listens for changes.
    */
-  before('should initialize the clients', function (callback) {
-
+  before("should initialize the clients", function(callback) {
     try {
-
-      defaultHappnInstance.services.session.localClient(function(e, instance){
-
+      defaultHappnInstance.services.session.localClient(function(e, instance) {
         if (e) return callback(e);
         defaultclient = instance;
 
-        indexedHappnInstance.services.session.localClient(function(e, instance){
-
+        indexedHappnInstance.services.session.localClient(function(
+          e,
+          instance
+        ) {
           if (e) return callback(e);
           indexedclient = instance;
 
           callback();
         });
       });
-
     } catch (e) {
       callback(e);
     }
   });
 
-  it('should find the default index record', function (done) {
-
-    defaultclient.get('/_SYSTEM/INDEXES/happn_path_index', null, function (e, result) {
-
+  it("should find the default index record", function(done) {
+    defaultclient.get("/_SYSTEM/INDEXES/happn_path_index", null, function(
+      e,
+      result
+    ) {
       if (e) return done(e);
 
       expect(result).to.not.be(null);
       expect(result).to.not.be(undefined);
 
-      expect(result.fields).to.eql({path: 1});
-      expect(result.options).to.eql({unique: true, w: 1});
+      expect(result.fields).to.eql({ path: 1 });
+      expect(result.options).to.eql({ unique: true, w: 1 });
 
       done();
     });
   });
 
-  it('should find the configured index records', function (done) {
-
-    indexedclient.get('/_SYSTEM/INDEXES/*', null, function (e, results) {
-
+  it("should find the configured index records", function(done) {
+    indexedclient.get("/_SYSTEM/INDEXES/*", null, function(e, results) {
       if (e) return done(e);
 
       expect(results.length == 2).to.be(true);
 
-      results.forEach(function(indexRecord){
-
-        if (indexRecord._meta.path == '/_SYSTEM/INDEXES/happn_path_index'){
-
-          expect(indexRecord.fields).to.eql({path: 1});
-          expect(indexRecord.options).to.eql({unique: true, w: 1});
-
+      results.forEach(function(indexRecord) {
+        if (indexRecord._meta.path == "/_SYSTEM/INDEXES/happn_path_index") {
+          expect(indexRecord.fields).to.eql({ path: 1 });
+          expect(indexRecord.options).to.eql({ unique: true, w: 1 });
         } else {
-
-          expect(indexRecord.fields).to.eql({test: 1});
-          expect(indexRecord.options).to.eql({w: 1});
+          expect(indexRecord.fields).to.eql({ test: 1 });
+          expect(indexRecord.options).to.eql({ w: 1 });
         }
       });
 
@@ -205,32 +195,33 @@ describe('integration/' + filename + '\n', function () {
     });
   });
 
-  it('should find the configured indexes in mongo', function (done) {
+  it("should find the configured indexes in mongo", function(done) {
+    var mongodb = require("mongodb"),
+      mongoclient = mongodb.MongoClient;
 
-    var  mongodb = require('mongodb')
-      ,  mongoclient = mongodb.MongoClient;
+    mongoclient.connect(
+      "mongodb://127.0.0.1:27017",
+      { useNewUrlParser: true, useUnifiedTopology: true },
+      function(err, client) {
+        if (err) return done(err);
 
-    mongoclient.connect ("mongodb://127.0.0.1:27017", function (err, client) {
+        var database = client.db("indexes_configured_test_db");
 
-      if (err) return callback(err);
+        var collection = database.collection("indexes_configured_test_db_coll");
 
-      var database = client.db("indexes_configured_test_db");
+        collection.listIndexes().toArray(function(e, indexes) {
+          var uniqueFound = false;
 
-      var collection = database.collection("indexes_configured_test_db_coll");
+          for (var i = 0; i < indexes.length; i++) {
+            var index = indexes[i];
+            if (index["unique"] && index["key"] && index["key"].path == 1)
+              uniqueFound = true;
+          }
 
-      collection.listIndexes().toArray(function(e, indexes){
-
-        var uniqueFound = false;
-
-        for (var i = 0; i < indexes.length; i++){
-
-          var index = indexes[i];
-          if (index["unique"] && index["key"] && index["key"].path == 1) uniqueFound = true;
-        }
-
-        expect(uniqueFound).to.be(true);
-        client.close(done);
-      });
-    });
+          expect(uniqueFound).to.be(true);
+          client.close(done);
+        });
+      }
+    );
   });
 });
