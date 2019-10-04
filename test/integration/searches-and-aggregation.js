@@ -42,7 +42,7 @@ describe("integration/" + filename + "\n", function() {
   function createTestItem(id, group, custom, pathPrefix) {
     return new Promise((resolve, reject) => {
       serviceInstance.upsert(
-        `${pathPrefix || ''}/searches-and-aggregation/${id}`,
+        `${pathPrefix || ""}/searches-and-aggregation/${id}`,
         {
           data: {
             group,
@@ -80,9 +80,7 @@ describe("integration/" + filename + "\n", function() {
   });
 
   it("tests a normal search", function(callback) {
-    serviceInstance.find(
-      "/searches-and-aggregation/*",
-      {}, function(e, items) {
+    serviceInstance.find("/searches-and-aggregation/*", {}, function(e, items) {
       if (e) return callback(e);
       expect(items.length).to.be(10);
       callback();
