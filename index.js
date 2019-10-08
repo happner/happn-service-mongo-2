@@ -5,13 +5,16 @@ function MongoProvider(config) {
   if (!config) config = {};
   let ConfigManager = require("./lib/config");
   let configManager = new ConfigManager();
-  Object.defineProperty(this, "config", { value: configManager.parse(config) });
+  Object.defineProperty(this, "config", {
+    value: configManager.parse(config)
+  });
   //feeds back to provider interface, so a not implemented exception can be raised
   //if someone tries to aggregate with an old provider
   this.featureset = {
     aggregate: true,
     count: true,
-    collation: true
+    collation: true,
+    projection: true
   };
 }
 
@@ -51,8 +54,13 @@ MongoProvider.prototype.__createIndexes = function(config, callback) {
     if (config.index == null) {
       config.index = {
         happn_path_index: {
-          fields: { path: 1 },
-          options: { unique: true, w: 1 }
+          fields: {
+            path: 1
+          },
+          options: {
+            unique: true,
+            w: 1
+          }
         }
       };
     }
@@ -80,7 +88,10 @@ MongoProvider.prototype.__createIndexes = function(config, callback) {
               if (e) return indexCB(e);
               this.upsert(
                 "/_SYSTEM/INDEXES/" + indexKey,
-                { data: indexConfig, creation_result: result },
+                {
+                  data: indexConfig,
+                  creation_result: result
+                },
                 {},
                 false,
                 indexCB
@@ -117,7 +128,9 @@ MongoProvider.prototype.preparePath = function(path) {
 };
 
 MongoProvider.prototype.getPathCriteria = function(path) {
-  let pathCriteria = { $and: [] };
+  let pathCriteria = {
+    $and: []
+  };
   let returnType = path.indexOf("*"); //0,1 == array -1 == single
 
   if (returnType > -1) {
@@ -125,8 +138,15 @@ MongoProvider.prototype.getPathCriteria = function(path) {
     let searchPath = this.preparePath(path);
     searchPath =
       "^" + this.escapeRegex(searchPath).replace(/\\\*/g, ".*") + "$";
-    pathCriteria.$and.push({ path: { $regex: new RegExp(searchPath) } });
-  } else pathCriteria.$and.push({ path: path }); //precise match
+    pathCriteria.$and.push({
+      path: {
+        $regex: new RegExp(searchPath)
+      }
+    });
+  } else
+    pathCriteria.$and.push({
+      path: path
+    }); //precise match
 
   return pathCriteria;
 };
@@ -135,45 +155,62 @@ MongoProvider.prototype.findOne = function(criteria, fields, callback) {
   return this.db.findOne(criteria, fields, callback);
 };
 
+MongoProvider.prototype.count = function(path, parameters, callback) {
+  let findParameters = Object.assign({}, parameters);
+  findParameters.count = true;
+  return this.find(path, findParameters, callback);
+};
+
 MongoProvider.prototype.find = function(path, parameters, callback) {
   if (typeof parameters == "function") {
     callback = parameters;
     parameters = {};
   }
+  let searchOptions = {};
   if (!parameters) parameters = {};
   if (!parameters.options) parameters.options = {};
   let pathCriteria = this.getPathCriteria(path);
   if (parameters.criteria) pathCriteria.$and.push(parameters.criteria);
+  if (parameters.options.collation)
+    searchOptions.collation = parameters.options.collation;
 
-  if (parameters.aggregate) {
+  if (parameters.options.aggregate) {
     this.db.aggregate(
       pathCriteria,
-      parameters.aggregate,
-      parameters.options,
-      callback
+      parameters.options.aggregate,
+      searchOptions,
+      function(e, result) {
+        if (e) return callback(e);
+        callback(null, {
+          data: {
+            value: result
+          }
+        });
+      }
     );
     return;
   }
 
-  if (parameters.count) {
-    this.db.count(pathCriteria, parameters.options, callback);
+  if (parameters.options.fields)
+    searchOptions.projection = parameters.options.fields;
+  if (parameters.options.projection)
+    searchOptions.projection = parameters.options.projection;
+  if (parameters.options.limit) searchOptions.limit = parameters.options.limit;
+  if (parameters.options.skip) searchOptions.skip = parameters.options.skip;
+
+  if (parameters.count || parameters.options.count) {
+    this.db.count(pathCriteria, searchOptions, function(e, count) {
+      if (e) return callback(e);
+      callback(null, {
+        data: {
+          value: count
+        }
+      });
+    });
     return;
   }
 
-  let searchOptions = {};
   let sortOptions = parameters.options ? parameters.options.sort : null;
-
-  if (parameters.options) {
-    if (parameters.options.projection)
-      searchOptions.projection = parameters.options.projection;
-    else if (parameters.options.fields)
-      searchOptions.projection = parameters.options.fields;
-    if (parameters.options.limit)
-      searchOptions.limit = parameters.options.limit;
-    if (parameters.options.skip) searchOptions.skip = parameters.options.skip;
-    if (parameters.options.count)
-      searchOptions.count = parameters.options.count;
-  }
 
   this.db.find(pathCriteria, searchOptions, sortOptions, function(e, items) {
     if (e) return callback(e);
@@ -214,8 +251,14 @@ MongoProvider.prototype.upsert = function(
   let modifiedOn = Date.now();
 
   let setParameters = {
-    $set: { data: setData.data, path: path, modified: modifiedOn },
-    $setOnInsert: { created: modifiedOn }
+    $set: {
+      data: setData.data,
+      path: path,
+      modified: modifiedOn
+    },
+    $setOnInsert: {
+      created: modifiedOn
+    }
   };
 
   if (options.modifiedBy) setParameters.$set.modifiedBy = options.modifiedBy;
@@ -241,7 +284,9 @@ MongoProvider.prototype.upsert = function(
 
   if (options.upsertType === this.UPSERT_TYPE.update) {
     return this.db.update(
-      { path: path },
+      {
+        path: path
+      },
       setParameters,
       options,
       (err, response) => {
@@ -251,23 +296,37 @@ MongoProvider.prototype.upsert = function(
     );
   }
 
-  this.db.findAndModify({ path: path }, setParameters, (err, response) => {
-    if (err) {
-      if (err.message.indexOf("duplicate key") > -1) {
-        //1 retry - as mongo doesn't seem to understand how upsert:true on a unique index should work...
-        return this.db.findAndModify(
-          { path: path },
-          setParameters,
-          (err, response) => {
-            if (err) return callback(err);
-            callback(null, response, response, true, this.__getMeta(response));
-          }
-        );
+  this.db.findAndModify(
+    {
+      path: path
+    },
+    setParameters,
+    (err, response) => {
+      if (err) {
+        if (err.message.indexOf("duplicate key") > -1) {
+          //1 retry - as mongo doesn't seem to understand how upsert:true on a unique index should work...
+          return this.db.findAndModify(
+            {
+              path: path
+            },
+            setParameters,
+            (err, response) => {
+              if (err) return callback(err);
+              callback(
+                null,
+                response,
+                response,
+                true,
+                this.__getMeta(response)
+              );
+            }
+          );
+        }
+        return callback(err);
       }
-      return callback(err);
+      callback(null, response, response, true, this.__getMeta(response));
     }
-    callback(null, response, response, true, this.__getMeta(response));
-  });
+  );
 };
 
 MongoProvider.prototype.remove = function(path, callback) {
@@ -318,7 +377,9 @@ BatchDataItem.prototype.empty = function() {
       // do callbacks for all inserted items
       callbackQueued.forEach(function(cb) {
         if (e) return cb.call(cb, e);
-        cb.call(cb, null, { ops: [response.ops[opIndex]] });
+        cb.call(cb, null, {
+          ops: [response.ops[opIndex]]
+        });
         opIndex++;
       });
     }.bind(this)

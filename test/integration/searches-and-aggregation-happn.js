@@ -1,57 +1,56 @@
 var filename = require("path").basename(__filename);
 
 describe("integration/" + filename + "\n", function() {
-  this.timeout(20000);
-  var expect = require("expect.js");
-  var service = require("../../index");
-  var config = {
-    url: "mongodb://127.0.0.1:27017/happn"
+  this.timeout(5000);
+
+  let expect = require("expect.js");
+  let test_id;
+  let path = require("path");
+  var happnTestHelper;
+
+  var publisherclient;
+  var listenerclient;
+
+  const collection = "happn-service-mongo-2-tests";
+  const provider = `${path.resolve(__dirname.replace("test/integration", ""))}${
+    path.sep
+  }index.js`;
+  const config = {
+    services: {
+      data: {
+        config: {
+          autoUpdateDBVersion: true,
+          datastores: [
+            {
+              name: "mongo",
+              provider,
+              isDefault: true,
+              collection
+            }
+          ]
+        }
+      }
+    }
   };
 
-  var serviceInstance = new service(config);
-
-  before("should clear the mongo collection", function(callback) {
-    let clearMongo = require("../__fixtures/clear-mongo-collection");
-    clearMongo("mongodb://localhost/happn", "happn", callback);
-  });
-
-  before("should initialize the service", function(callback) {
-    serviceInstance.initialize(function(e) {
-      if (e) return callback(e);
-
-      if (!serviceInstance.happn)
-        serviceInstance.happn = {
-          services: {
-            utils: {
-              wildcardMatch: function(pattern, matchTo) {
-                var regex = new RegExp(pattern.replace(/[*]/g, ".*"));
-                var matchResult = matchTo.match(regex);
-
-                if (matchResult) return true;
-
-                return false;
-              }
-            }
-          }
-        };
-
-      callback();
-    });
+  before("should initialize the service and clients", async () => {
+    test_id = Date.now() + "_" + require("shortid").generate();
+    happnTestHelper = require("../__fixtures/happn-test-helper").create(config);
+    await happnTestHelper.initialize();
+    publisherclient = happnTestHelper.publisherclient;
+    listenerclient = happnTestHelper.listenerclient;
   });
 
   function createTestItem(id, group, custom, pathPrefix) {
     return new Promise((resolve, reject) => {
-      serviceInstance.upsert(
+      publisherclient.set(
         `${pathPrefix || ""}/searches-and-aggregation/${id}`,
         {
-          data: {
-            group,
-            custom,
-            id
-          }
+          group,
+          custom,
+          id
         },
         {},
-        false,
         function(e, response, created) {
           if (e) return reject(e);
           resolve(created);
@@ -75,12 +74,12 @@ describe("integration/" + filename + "\n", function() {
     await createTestItem(12, "even", "even", "/other");
   });
 
-  after(function(done) {
-    serviceInstance.stop(done);
+  after(async () => {
+    await happnTestHelper.tearDown();
   });
 
   it("tests a normal search", function(callback) {
-    serviceInstance.find("/searches-and-aggregation/*", {}, function(e, items) {
+    listenerclient.get("/searches-and-aggregation/*", {}, function(e, items) {
       if (e) return callback(e);
       expect(items.length).to.be(10);
       callback();
@@ -88,24 +87,23 @@ describe("integration/" + filename + "\n", function() {
   });
 
   it("tests a normal search, with the count option and $not", function(callback) {
-    serviceInstance.find(
+    listenerclient.count(
       "/searches-and-aggregation/*",
       {
         criteria: {
-          "data.custom": { $not: { $eq: "Odd" } }
-        },
-        count: true
+          custom: { $not: { $eq: "Odd" } }
+        }
       },
-      function(e, result) {
+      function(e, count) {
         if (e) return callback(e);
-        expect(result.data.value).to.be(9);
+        expect(count.value).to.be(9);
         callback();
       }
     );
   });
 
   it("tests a normal search, with the count option, collation case insensitive", function(callback) {
-    serviceInstance.find(
+    listenerclient.count(
       "/searches-and-aggregation/*",
       {
         criteria: {
@@ -116,37 +114,35 @@ describe("integration/" + filename + "\n", function() {
             locale: "en_US",
             strength: 1
           }
-        },
-        count: true
+        }
       },
-      function(e, result) {
+      function(e, count) {
         if (e) return callback(e);
-        expect(result.data.value).to.be(5);
+        expect(count.value).to.be(5);
         callback();
       }
     );
   });
 
   it("tests a normal search, with the count option, case sensitive", function(callback) {
-    serviceInstance.find(
+    listenerclient.count(
       "/searches-and-aggregation/*",
       {
         criteria: {
-          "data.custom": { $eq: "Odd" }
+          custom: { $eq: "Odd" }
         },
-        options: {},
-        count: true
+        options: {}
       },
-      function(e, result) {
+      function(e, count) {
         if (e) return callback(e);
-        expect(result.data.value).to.be(1);
+        expect(count.value).to.be(1);
         callback();
       }
     );
   });
 
   it("tests an aggregated search", function(callback) {
-    serviceInstance.find(
+    listenerclient.get(
       "/searches-and-aggregation/*",
       {
         criteria: {
@@ -154,23 +150,21 @@ describe("integration/" + filename + "\n", function() {
             $eq: "odd"
           }
         },
-        options: {
-          aggregate: [
-            {
-              $group: {
-                _id: "$data.custom",
-                total: {
-                  $sum: "$data.id"
-                }
+        aggregate: [
+          {
+            $group: {
+              _id: "$data.custom",
+              total: {
+                $sum: "$data.id"
               }
             }
-          ]
-        }
+          }
+        ]
       },
-      function(e, result) {
+      function(e, items) {
         if (e) return callback(e);
-        expect(result.data.value.length).to.be(4);
-        expect(result.data.value).to.eql([
+        expect(items.value.length).to.be(4);
+        expect(items.value).to.eql([
           {
             _id: "ODD",
             total: 5
@@ -194,7 +188,7 @@ describe("integration/" + filename + "\n", function() {
   });
 
   it("tests an aggregated search with a case-insensitive collation", function(callback) {
-    serviceInstance.find(
+    listenerclient.get(
       "/searches-and-aggregation/*",
       {
         criteria: {
@@ -202,27 +196,27 @@ describe("integration/" + filename + "\n", function() {
             $eq: "odd"
           }
         },
-        options: {
-          aggregate: [
-            {
-              $group: {
-                _id: "$data.custom",
-                total: {
-                  $sum: "$data.id"
-                }
+        aggregate: [
+          {
+            $group: {
+              _id: "$data.custom",
+              total: {
+                $sum: "$data.id"
               }
             }
-          ],
+          }
+        ],
+        options: {
           collation: {
             locale: "en_US",
             strength: 1
           }
         }
       },
-      function(e, result) {
+      function(e, items) {
         if (e) return callback(e);
-        expect(result.data.value.length).to.be(1);
-        expect(result.data.value).to.eql([
+        expect(items.value.length).to.be(1);
+        expect(items.value).to.eql([
           {
             _id: "Odd",
             total: 25

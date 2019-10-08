@@ -2,12 +2,8 @@ describe("happn-tests", function() {
   this.timeout(5000);
 
   let expect = require("expect.js");
-  let happn = require("happn-3");
-  let service = happn.service;
   let async = require("async");
-  let test_secret = "test_secret";
   let mode = "embedded";
-  let happnInstance = null;
   let test_id;
   let path = require("path");
   var happnTestHelper;
@@ -67,7 +63,7 @@ describe("happn-tests", function() {
         {
           noPublish: true
         },
-        function(e, result) {
+        function(e) {
           if (!e) {
             publisherclient.get(
               "1_eventemitter_embedded_sanity/" +
@@ -101,7 +97,7 @@ describe("happn-tests", function() {
           event_type: "set",
           count: 1
         },
-        function(message) {
+        function() {
           expect(
             listenerclient.state.events[
               "/SET@/1_eventemitter_embedded_sanity/" +
@@ -132,7 +128,7 @@ describe("happn-tests", function() {
                 property3: "property3"
               },
               null,
-              function(e, result) {}
+              function() {}
             );
           } else callback(e);
         }
@@ -239,7 +235,7 @@ describe("happn-tests", function() {
           property3: "property3"
         },
         null,
-        function(e, result) {
+        function(e) {
           if (e) return callback(e);
 
           publisherclient.set(
@@ -253,7 +249,7 @@ describe("happn-tests", function() {
             {
               merge: true
             },
-            function(e, result) {
+            function(e) {
               if (e) return callback(e);
 
               publisherclient.get(
@@ -296,7 +292,7 @@ describe("happn-tests", function() {
         event_type: "set",
         count: 2
       },
-      function(message, meta) {
+      function(message) {
         if (firstTimeNonMergeConsecutive === undefined) {
           firstTimeNonMergeConsecutive = message;
         } else {
@@ -338,7 +334,7 @@ describe("happn-tests", function() {
         event_type: "set",
         count: 2
       },
-      function(message, meta) {
+      function(message) {
         expect(message).to.eql(object);
 
         if (firstTime) {
@@ -374,38 +370,6 @@ describe("happn-tests", function() {
       }
     );
   });
-
-  // it('should contain the same payload between a merge and a normal store for first store', function (done) {
-  //   let object = {
-  //     param1: 10,
-  //     param2: 20
-  //   };
-  //   let firstTime = true;
-  //
-  //   listenerclient.on('mergeTest/object', {
-  //     event_type: 'set',
-  //     count: 2
-  //   }, function (message) {
-  //     expect(message).to.eql(object);
-  //     if (firstTime) {
-  //       firstTime = false;
-  //       return;
-  //     }
-  //     done();
-  //   }, function (err) {
-  //     expect(err).to.not.be.ok();
-  //     publisherclient.set('mergeTest/object', object, {
-  //       merge: true
-  //     }, function (err) {
-  //       expect(err).to.not.be.ok();
-  //       publisherclient.set('mergeTest/object', object, {
-  //         merge: true
-  //       }, function (err) {
-  //         expect(err).to.not.be.ok();
-  //       });
-  //     });
-  //   })
-  // });
 
   it("should search for a complex object", function(callback) {
     let test_path_end = require("shortid").generate();
@@ -469,7 +433,7 @@ describe("happn-tests", function() {
         test_path_end,
       complex_obj,
       null,
-      function(e, put_result) {
+      function(e) {
         if (e) return callback(e);
 
         publisherclient.set(
@@ -480,7 +444,7 @@ describe("happn-tests", function() {
             "/1",
           complex_obj,
           null,
-          function(e, put_result) {
+          function(e) {
             if (e) return callback(e);
 
             ////////////console.log('searching');
@@ -542,7 +506,7 @@ describe("happn-tests", function() {
         test_path_end,
       complex_obj,
       null,
-      function(e, put_result) {
+      function(e) {
         expect(e == null).to.be(true);
 
         setTimeout(function() {
@@ -581,7 +545,7 @@ describe("happn-tests", function() {
                     test_id +
                     "/testsubscribe/data/complex/" +
                     test_path_end,
-                  function(e, unmatched) {
+                  function() {
                     callback(new Error("no items found in the date range"));
                   }
                 );
@@ -591,7 +555,7 @@ describe("happn-tests", function() {
                     test_id +
                     "/testsubscribe/data/complex/" +
                     test_path_end,
-                  function(e, unmatched) {
+                  function() {
                     callback();
                   }
                 );
@@ -618,7 +582,7 @@ describe("happn-tests", function() {
         {
           noPublish: true
         },
-        function(e, result) {
+        function() {
           //We perform the actual delete
           publisherclient.remove(
             "/1_eventemitter_embedded_sanity/" +
@@ -630,10 +594,6 @@ describe("happn-tests", function() {
             function(e, result) {
               expect(e).to.be(null);
               expect(result._meta.status).to.be("ok");
-
-              ////////////////////console.log('DELETE RESULT');
-              ////////////////////console.log(result);
-
               callback();
             }
           );
@@ -706,12 +666,8 @@ describe("happn-tests", function() {
       {
         noPublish: true
       },
-      function(e, result) {
-        ////////////////////console.log('did set');
-        ////////////////////console.log([e, result]);
-
+      function(e) {
         if (e) return callback(e);
-
         publisherclient.set(
           "/1_eventemitter_embedded_sanity/" + test_id + "/test/tag",
           null,
@@ -721,13 +677,7 @@ describe("happn-tests", function() {
             noPublish: true
           },
           function(e, result) {
-            //console.log(e);
-
             if (e) return callback(e);
-
-            ////////////////////console.log('merge tag results');
-            ////////////////////console.log(e);
-            ////////////////////console.log(result);
 
             expect(result.data.property1).to.be("property1");
             expect(result.data.property2).to.be("property2");
@@ -766,11 +716,8 @@ describe("happn-tests", function() {
     );
   });
 
-  //  We set the listener client to listen for a PUT event according to a path, then we set a value with the publisher client.
-
   it("the listener should pick up a single published event", function(callback) {
     try {
-      //first listen for the change
       listenerclient.on(
         "/1_eventemitter_embedded_sanity/" +
           test_id +
@@ -779,7 +726,7 @@ describe("happn-tests", function() {
           event_type: "set",
           count: 1
         },
-        function(message) {
+        function() {
           expect(
             listenerclient.state.events[
               "/SET@/1_eventemitter_embedded_sanity/" +
@@ -790,8 +737,6 @@ describe("happn-tests", function() {
           callback();
         },
         function(e) {
-          //////////////////console.log('ON HAS HAPPENED: ' + e);
-
           if (!e) {
             expect(
               listenerclient.state.events[
@@ -800,8 +745,6 @@ describe("happn-tests", function() {
                   "/testsubscribe/data/event"
               ].length
             ).to.be(1);
-            //////////////////console.log('on subscribed, about to publish');
-
             //then make the change
             publisherclient.set(
               "/1_eventemitter_embedded_sanity/" +
@@ -813,9 +756,7 @@ describe("happn-tests", function() {
                 property3: "property3"
               },
               null,
-              function(e, result) {
-                ////////////////////////////console.log('put happened - listening for result');
-              }
+              function() {}
             );
           } else callback(e);
         }
@@ -842,7 +783,7 @@ describe("happn-tests", function() {
           property3: "property3"
         },
         null,
-        function(e, result) {
+        function(e) {
           if (!e) {
             publisherclient.get(
               "1_eventemitter_embedded_sanity/" +
@@ -931,7 +872,7 @@ describe("happn-tests", function() {
           property1: "sib_post_property1",
           property2: "sib_post_property2"
         },
-        function(e, results) {
+        function(e) {
           expect(e == null).to.be(true);
 
           publisherclient.setSibling(
@@ -943,7 +884,7 @@ describe("happn-tests", function() {
               property1: "sib_post_property1",
               property2: "sib_post_property2"
             },
-            function(e, results) {
+            function(e) {
               expect(e == null).to.be(true);
 
               //the child method returns a child in the collection with a specified id
@@ -982,7 +923,7 @@ describe("happn-tests", function() {
           event_type: "set",
           count: 1
         },
-        function(message) {
+        function() {
           expect(
             listenerclient.state.events[
               "/SET@/1_eventemitter_embedded_sanity/" +
@@ -1002,8 +943,6 @@ describe("happn-tests", function() {
               ].length
             ).to.be(1);
 
-            ////////////////////////////console.log('on subscribed, about to publish');
-
             //then make the change
             publisherclient.set(
               "/1_eventemitter_embedded_sanity/" +
@@ -1015,9 +954,7 @@ describe("happn-tests", function() {
                 property3: "property3"
               },
               null,
-              function(e, result) {
-                ////////////////////////////console.log('put happened - listening for result');
-              }
+              function() {}
             );
           } else callback(e);
         }
@@ -1041,7 +978,7 @@ describe("happn-tests", function() {
         property3: "property3"
       },
       null,
-      function(e, insertResult) {
+      function(e) {
         expect(e == null).to.be(true);
         publisherclient.set(
           "1_eventemitter_embedded_sanity/" +
@@ -1055,7 +992,7 @@ describe("happn-tests", function() {
             property3: "property3"
           },
           null,
-          function(e, insertResult) {
+          function(e) {
             expect(e == null).to.be(true);
 
             publisherclient.get(
@@ -1092,7 +1029,7 @@ describe("happn-tests", function() {
         property3: "property3"
       },
       null,
-      function(e, insertResult) {
+      function(e) {
         expect(e == null).to.be(true);
         publisherclient.set(
           "1_eventemitter_embedded_sanity/" +
@@ -1106,7 +1043,7 @@ describe("happn-tests", function() {
             property3: "property3"
           },
           null,
-          function(e, insertResult) {
+          function(e) {
             expect(e == null).to.be(true);
 
             publisherclient.getPaths(
@@ -1138,10 +1075,7 @@ describe("happn-tests", function() {
         property3: "property3"
       },
       null,
-      function(e, result) {
-        //////////////////console.log('did delete set');
-        //path, event_type, count, handler, done
-        //We listen for the DELETE event
+      function() {
         listenerclient.on(
           "/1_eventemitter_embedded_sanity/" +
             test_id +
@@ -1183,7 +1117,7 @@ describe("happn-tests", function() {
                 test_id +
                 "/testsubscribe/data/delete_me",
               null,
-              function(e, result) {}
+              function() {}
             );
           }
         );
@@ -1202,7 +1136,7 @@ describe("happn-tests", function() {
         event_type: "set",
         count: 0
       },
-      function(message) {
+      function() {
         //we detach all listeners from the path here
         ////console.log('ABOUT OFF PATH');
         listenerclient.offPath(
@@ -1220,10 +1154,7 @@ describe("happn-tests", function() {
                 event_type: "set",
                 count: 0
               },
-              function(message) {
-                ////console.log('ON RAN');
-                ////console.log(message);
-
+              function() {
                 listenerclient.off(currentListenerId, function(e) {
                   if (e) return callback(new Error(e));
                   else return callback();
@@ -1244,11 +1175,8 @@ describe("happn-tests", function() {
                     property3: "property3"
                   },
                   {},
-                  function(e, setresult) {
+                  function(e) {
                     if (e) return callback(new Error(e));
-
-                    ////console.log('DID ON SET');
-                    ////console.log(setresult);
                   }
                 );
               }
@@ -1271,7 +1199,7 @@ describe("happn-tests", function() {
             property3: "property3"
           },
           {},
-          function(e, setresult) {
+          function(e) {
             if (e) return callback(new Error(e));
           }
         );
@@ -1280,8 +1208,6 @@ describe("happn-tests", function() {
   });
 
   it("should subscribe to the catch all notification", function(callback) {
-    let caught = {};
-
     this.timeout(10000);
     let caughtCount = 0;
 
@@ -1314,13 +1240,13 @@ describe("happn-tests", function() {
             property3: "property3"
           },
           null,
-          function(e, put_result) {
+          function() {
             publisherclient.remove(
               "/1_eventemitter_embedded_sanity/" +
                 test_id +
                 "/testsubscribe/data/catch_all",
               null,
-              function(e, del_result) {}
+              function() {}
             );
           }
         );
@@ -1334,7 +1260,7 @@ describe("happn-tests", function() {
     let onHappened = false;
 
     listenerclient.onAll(
-      function(message) {
+      function() {
         onHappened = true;
         callback(new Error("this wasnt meant to happen"));
       },
@@ -1349,7 +1275,7 @@ describe("happn-tests", function() {
             event_type: "set",
             count: 0
           },
-          function(message) {
+          function() {
             onHappened = true;
             callback(new Error("this wasnt meant to happen"));
           },
@@ -1369,7 +1295,7 @@ describe("happn-tests", function() {
                   property3: "property3"
                 },
                 null,
-                function(e, put_result) {
+                function(e) {
                   if (e) return callback(e);
 
                   setTimeout(function() {
@@ -1420,7 +1346,7 @@ describe("happn-tests", function() {
           {
             noPublish: true
           },
-          function(e, result) {
+          function(e) {
             expect(e).to.not.be.ok();
           }
         );
@@ -1444,9 +1370,7 @@ describe("happn-tests", function() {
             increment: 1,
             noPublish: true
           },
-          function(e, result) {
-            timeCB(e);
-          }
+          timeCB
         );
       },
       function(e) {
@@ -1712,7 +1636,7 @@ describe("happn-tests", function() {
         name: "Loadtest_123",
         anotherProp: "anotherPropValue"
       },
-      function(e, result) {
+      function(e) {
         if (e) return done(e);
 
         var options = {
@@ -1752,7 +1676,7 @@ describe("happn-tests", function() {
         name: "Loadtest_123",
         anotherProp: "anotherPropValue"
       },
-      function(e, result) {
+      function(e) {
         if (e) return done(e);
 
         var options = {
@@ -1792,7 +1716,7 @@ describe("happn-tests", function() {
         name: "Loadtest_123",
         anotherProp: "anotherPropValue"
       },
-      function(e, result) {
+      function(e) {
         if (e) return done(e);
 
         var options = {
@@ -1813,7 +1737,7 @@ describe("happn-tests", function() {
             criteria: criteria,
             options: options
           },
-          function(e, result) {
+          function(e) {
             expect(e.toString()).to.be(
               "SystemError: $regex parameter value must be an Array or a string"
             );
