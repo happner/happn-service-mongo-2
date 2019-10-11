@@ -88,13 +88,12 @@ describe("integration/" + filename + "\n", function() {
   });
 
   it("tests a normal search, with the count option and $not", function(callback) {
-    serviceInstance.find(
+    serviceInstance.count(
       "/searches-and-aggregation/*",
       {
         criteria: {
           "data.custom": { $not: { $eq: "Odd" } }
-        },
-        count: true
+        }
       },
       function(e, result) {
         if (e) return callback(e);
@@ -105,7 +104,7 @@ describe("integration/" + filename + "\n", function() {
   });
 
   it("tests a normal search, with the count option, collation case insensitive", function(callback) {
-    serviceInstance.find(
+    serviceInstance.count(
       "/searches-and-aggregation/*",
       {
         criteria: {
@@ -116,8 +115,7 @@ describe("integration/" + filename + "\n", function() {
             locale: "en_US",
             strength: 1
           }
-        },
-        count: true
+        }
       },
       function(e, result) {
         if (e) return callback(e);
@@ -128,14 +126,13 @@ describe("integration/" + filename + "\n", function() {
   });
 
   it("tests a normal search, with the count option, case sensitive", function(callback) {
-    serviceInstance.find(
+    serviceInstance.count(
       "/searches-and-aggregation/*",
       {
         criteria: {
           "data.custom": { $eq: "Odd" }
         },
-        options: {},
-        count: true
+        options: {}
       },
       function(e, result) {
         if (e) return callback(e);

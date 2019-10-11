@@ -191,10 +191,6 @@ MongoProvider.prototype.find = function(path, parameters, callback) {
     return;
   }
 
-  if (parameters.options.fields)
-    searchOptions.projection = parameters.options.fields;
-  if (parameters.options.projection)
-    searchOptions.projection = parameters.options.projection;
   if (parameters.options.limit) searchOptions.limit = parameters.options.limit;
   if (parameters.options.skip) searchOptions.skip = parameters.options.skip;
 
@@ -209,6 +205,11 @@ MongoProvider.prototype.find = function(path, parameters, callback) {
     });
     return;
   }
+
+  if (parameters.options.fields)
+    searchOptions.projection = parameters.options.fields;
+  if (parameters.options.projection)
+    searchOptions.projection = parameters.options.projection;
 
   let sortOptions = parameters.options ? parameters.options.sort : null;
 
