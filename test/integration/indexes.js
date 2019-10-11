@@ -11,6 +11,34 @@ describe("integration/" + filename + "\n", function() {
 
   this.timeout(5000);
 
+  before("should drop the mongo db", async () => {
+    let dropMongoDb = require("../__fixtures/drop-mongo-db");
+    await dropMongoDb("indexes_configured_test_db");
+  });
+
+  before("should not find the configured indexes in mongo", function(done) {
+    var mongodb = require("mongodb"),
+      mongoclient = mongodb.MongoClient;
+
+    mongoclient.connect(
+      "mongodb://127.0.0.1:27017",
+      { useNewUrlParser: true, useUnifiedTopology: true },
+      function(err, client) {
+        if (err) return done(err);
+
+        var database = client.db("indexes_configured_test_db");
+        var collection = database.collection("indexes_configured_test_db_coll");
+
+        collection.listIndexes().toArray(function(e, indexes) {
+          expect(e.message).to.be(
+            "ns does not exist: indexes_configured_test_db.indexes_configured_test_db_coll"
+          );
+          client.close(done);
+        });
+      }
+    );
+  });
+
   var db_path =
     path.resolve(__dirname.replace("test/integration", "")) +
     path.sep +
