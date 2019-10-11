@@ -26,3 +26,4 @@ coverage/*
 
 .DS_Store
 .jshintrc
+.nyc_output
