@@ -1,20 +1,18 @@
-var filename = require("path").basename(__filename);
+var filename = require('path').basename(__filename);
 
-describe("integration/" + filename + "\n", function() {
+describe('integration/' + filename + '\n', function() {
   this.timeout(5000);
 
-  let expect = require("expect.js");
+  let expect = require('expect.js');
   let test_id;
-  let path = require("path");
+  let path = require('path');
   var happnTestHelper;
 
   var publisherclient;
   var listenerclient;
 
-  const collection = "happn-service-mongo-2-tests";
-  const provider = `${path.resolve(__dirname.replace("test/integration", ""))}${
-    path.sep
-  }index.js`;
+  const collection = 'happn-service-mongo-2-tests';
+  const provider = `${path.resolve(__dirname.replace('test/integration', ''))}${path.sep}index.js`;
   const config = {
     services: {
       data: {
@@ -22,7 +20,7 @@ describe("integration/" + filename + "\n", function() {
           autoUpdateDBVersion: true,
           datastores: [
             {
-              name: "mongo",
+              name: 'mongo',
               provider,
               isDefault: true,
               collection
@@ -33,9 +31,9 @@ describe("integration/" + filename + "\n", function() {
     }
   };
 
-  before("should initialize the service and clients", async () => {
-    test_id = Date.now() + "_" + require("shortid").generate();
-    happnTestHelper = require("../__fixtures/happn-test-helper").create(config);
+  before('should initialize the service and clients', async () => {
+    test_id = Date.now() + '_' + require('shortid').generate();
+    happnTestHelper = require('../__fixtures/happn-test-helper').create(config);
     await happnTestHelper.initialize();
     publisherclient = happnTestHelper.publisherclient;
     listenerclient = happnTestHelper.listenerclient;
@@ -44,7 +42,7 @@ describe("integration/" + filename + "\n", function() {
   function createTestItem(id, group, custom, pathPrefix) {
     return new Promise((resolve, reject) => {
       publisherclient.set(
-        `${pathPrefix || ""}/searches-and-aggregation/${id}`,
+        `${pathPrefix || ''}/searches-and-aggregation/${id}`,
         {
           group,
           custom,
@@ -59,39 +57,39 @@ describe("integration/" + filename + "\n", function() {
     });
   }
 
-  before("it creates test data", async () => {
-    await createTestItem(1, "odd", "Odd");
-    await createTestItem(2, "even", "Even");
-    await createTestItem(3, "odd", "odd");
-    await createTestItem(4, "even", "even");
-    await createTestItem(5, "odd", "ODD");
-    await createTestItem(6, "even", "EVEN");
-    await createTestItem(7, "odd", "odD");
-    await createTestItem(8, "even", "EVen");
-    await createTestItem(9, "odd", "odd");
-    await createTestItem(10, "even", "even");
-    await createTestItem(11, "even", "even", "/other");
-    await createTestItem(12, "even", "even", "/other");
+  before('it creates test data', async () => {
+    await createTestItem(1, 'odd', 'Odd');
+    await createTestItem(2, 'even', 'Even');
+    await createTestItem(3, 'odd', 'odd');
+    await createTestItem(4, 'even', 'even');
+    await createTestItem(5, 'odd', 'ODD');
+    await createTestItem(6, 'even', 'EVEN');
+    await createTestItem(7, 'odd', 'odD');
+    await createTestItem(8, 'even', 'EVen');
+    await createTestItem(9, 'odd', 'odd');
+    await createTestItem(10, 'even', 'even');
+    await createTestItem(11, 'even', 'even', '/other');
+    await createTestItem(12, 'even', 'even', '/other');
   });
 
   after(async () => {
     await happnTestHelper.tearDown();
   });
 
-  it("tests a normal search", function(callback) {
-    listenerclient.get("/searches-and-aggregation/*", {}, function(e, items) {
+  it('tests a normal search', function(callback) {
+    listenerclient.get('/searches-and-aggregation/*', {}, function(e, items) {
       if (e) return callback(e);
       expect(items.length).to.be(10);
       callback();
     });
   });
 
-  it("tests a normal search, with the count option and $not", function(callback) {
+  it('tests a normal search, with the count option and $not', function(callback) {
     listenerclient.count(
-      "/searches-and-aggregation/*",
+      '/searches-and-aggregation/*',
       {
         criteria: {
-          custom: { $not: { $eq: "Odd" } }
+          custom: { $not: { $eq: 'Odd' } }
         }
       },
       function(e, count) {
@@ -102,16 +100,16 @@ describe("integration/" + filename + "\n", function() {
     );
   });
 
-  it("tests a normal search, with the count option, collation case insensitive", function(callback) {
+  it('tests a normal search, with the count option, collation case insensitive', function(callback) {
     listenerclient.count(
-      "/searches-and-aggregation/*",
+      '/searches-and-aggregation/*',
       {
         criteria: {
-          "data.custom": { $eq: "Odd" }
+          'data.custom': { $eq: 'Odd' }
         },
         options: {
           collation: {
-            locale: "en_US",
+            locale: 'en_US',
             strength: 1
           }
         }
@@ -124,12 +122,12 @@ describe("integration/" + filename + "\n", function() {
     );
   });
 
-  it("tests a normal search, with the count option, case sensitive", function(callback) {
+  it('tests a normal search, with the count option, case sensitive', function(callback) {
     listenerclient.count(
-      "/searches-and-aggregation/*",
+      '/searches-and-aggregation/*',
       {
         criteria: {
-          custom: { $eq: "Odd" }
+          custom: { $eq: 'Odd' }
         },
         options: {}
       },
@@ -141,21 +139,21 @@ describe("integration/" + filename + "\n", function() {
     );
   });
 
-  it("tests an aggregated search", function(callback) {
+  it('tests an aggregated search', function(callback) {
     listenerclient.get(
-      "/searches-and-aggregation/*",
+      '/searches-and-aggregation/*',
       {
         criteria: {
-          "data.group": {
-            $eq: "odd"
+          'data.group': {
+            $eq: 'odd'
           }
         },
         aggregate: [
           {
             $group: {
-              _id: "$data.custom",
+              _id: '$data.custom',
               total: {
-                $sum: "$data.id"
+                $sum: '$data.id'
               }
             }
           }
@@ -166,19 +164,19 @@ describe("integration/" + filename + "\n", function() {
         expect(items.value.length).to.be(4);
         expect(items.value).to.eql([
           {
-            _id: "ODD",
+            _id: 'ODD',
             total: 5
           },
           {
-            _id: "odD",
+            _id: 'odD',
             total: 7
           },
           {
-            _id: "odd",
+            _id: 'odd',
             total: 12
           },
           {
-            _id: "Odd",
+            _id: 'Odd',
             total: 1
           }
         ]);
@@ -187,28 +185,28 @@ describe("integration/" + filename + "\n", function() {
     );
   });
 
-  it("tests an aggregated search with a case-insensitive collation", function(callback) {
+  it('tests an aggregated search with a case-insensitive collation', function(callback) {
     listenerclient.get(
-      "/searches-and-aggregation/*",
+      '/searches-and-aggregation/*',
       {
         criteria: {
-          "data.group": {
-            $eq: "odd"
+          'data.group': {
+            $eq: 'odd'
           }
         },
         aggregate: [
           {
             $group: {
-              _id: "$data.custom",
+              _id: '$data.custom',
               total: {
-                $sum: "$data.id"
+                $sum: '$data.id'
               }
             }
           }
         ],
         options: {
           collation: {
-            locale: "en_US",
+            locale: 'en_US',
             strength: 1
           }
         }
@@ -218,7 +216,7 @@ describe("integration/" + filename + "\n", function() {
         expect(items.value.length).to.be(1);
         expect(items.value).to.eql([
           {
-            _id: "Odd",
+            _id: 'Odd',
             total: 25
           }
         ]);

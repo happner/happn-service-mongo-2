@@ -1,6 +1,6 @@
-const happn = require("happn-3");
+const happn = require('happn-3');
 const service = happn.service;
-const clearMongo = require("./clear-mongo-collection");
+const clearMongo = require('./clear-mongo-collection');
 
 class HappnTestHelper {
   constructor(serverConfig) {
@@ -14,7 +14,7 @@ class HappnTestHelper {
   async clearMongoCollection() {
     return new Promise((resolve, reject) => {
       clearMongo(
-        "mongodb://localhost",
+        'mongodb://localhost',
         this.serverConfig.services.data.config.datastores[0].collection,
         e => {
           if (e) return reject(e);

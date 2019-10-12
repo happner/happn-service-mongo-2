@@ -1,37 +1,37 @@
-var filename = require("path").basename(__filename);
+var filename = require('path').basename(__filename);
 
-describe("integration/" + filename + "\n", function() {
-  var expect = require("expect.js");
-  var happn = require("happn-3");
+describe('integration/' + filename + '\n', function() {
+  var expect = require('expect.js');
+  var happn = require('happn-3');
   var service = happn.service;
   var defaultHappnInstance = null;
   var indexedHappnInstance = null;
   var test_id;
-  var path = require("path");
+  var path = require('path');
 
   this.timeout(5000);
 
-  before("should drop the mongo db", async () => {
-    let dropMongoDb = require("../__fixtures/drop-mongo-db");
-    await dropMongoDb("indexes_configured_test_db");
+  before('should drop the mongo db', async () => {
+    let dropMongoDb = require('../__fixtures/drop-mongo-db');
+    await dropMongoDb('indexes_configured_test_db');
   });
 
-  before("should not find the configured indexes in mongo", function(done) {
-    var mongodb = require("mongodb"),
+  before('should not find the configured indexes in mongo', function(done) {
+    var mongodb = require('mongodb'),
       mongoclient = mongodb.MongoClient;
 
     mongoclient.connect(
-      "mongodb://127.0.0.1:27017",
+      'mongodb://127.0.0.1:27017',
       { useNewUrlParser: true, useUnifiedTopology: true },
       function(err, client) {
         if (err) return done(err);
 
-        var database = client.db("indexes_configured_test_db");
-        var collection = database.collection("indexes_configured_test_db_coll");
+        var database = client.db('indexes_configured_test_db');
+        var collection = database.collection('indexes_configured_test_db_coll');
 
         collection.listIndexes().toArray(function(e, indexes) {
           expect(e.message).to.be(
-            "ns does not exist: indexes_configured_test_db.indexes_configured_test_db_coll"
+            'ns does not exist: indexes_configured_test_db.indexes_configured_test_db_coll'
           );
           client.close(done);
         });
@@ -39,10 +39,7 @@ describe("integration/" + filename + "\n", function() {
     );
   });
 
-  var db_path =
-    path.resolve(__dirname.replace("test/integration", "")) +
-    path.sep +
-    "index.js";
+  var db_path = path.resolve(__dirname.replace('test/integration', '')) + path.sep + 'index.js';
 
   var defaultConfig = {
     port: 55001,
@@ -52,11 +49,11 @@ describe("integration/" + filename + "\n", function() {
           autoUpdateDBVersion: true,
           datastores: [
             {
-              name: "mongo",
+              name: 'mongo',
               provider: db_path,
               settings: {
-                database: "indexes_default_test_db",
-                collection: "indexes_default_test_db_coll"
+                database: 'indexes_default_test_db',
+                collection: 'indexes_default_test_db_coll'
               }
             }
           ]
@@ -73,11 +70,11 @@ describe("integration/" + filename + "\n", function() {
           autoUpdateDBVersion: true,
           datastores: [
             {
-              name: "mongo",
+              name: 'mongo',
               provider: db_path,
               settings: {
-                database: "indexes_configured_test_db",
-                collection: "indexes_configured_test_db_coll",
+                database: 'indexes_configured_test_db',
+                collection: 'indexes_configured_test_db_coll',
                 index: {
                   happn_path_index: {
                     fields: { path: 1 },
@@ -96,8 +93,8 @@ describe("integration/" + filename + "\n", function() {
     }
   };
 
-  before("should initialize the default service", function(callback) {
-    test_id = Date.now() + "_" + require("shortid").generate();
+  before('should initialize the default service', function(callback) {
+    test_id = Date.now() + '_' + require('shortid').generate();
 
     try {
       service.create(
@@ -116,8 +113,8 @@ describe("integration/" + filename + "\n", function() {
     }
   });
 
-  before("should initialize the indexed service", function(callback) {
-    test_id = Date.now() + "_" + require("shortid").generate();
+  before('should initialize the indexed service', function(callback) {
+    test_id = Date.now() + '_' + require('shortid').generate();
 
     try {
       service.create(
@@ -150,14 +147,12 @@ describe("integration/" + filename + "\n", function() {
   });
 
   after(function(done) {
-    if (defaultHappnInstance)
-      defaultHappnInstance.stop({ reconnect: false }, done);
+    if (defaultHappnInstance) defaultHappnInstance.stop({ reconnect: false }, done);
     else done();
   });
 
   after(function(done) {
-    if (indexedHappnInstance)
-      indexedHappnInstance.stop({ reconnect: false }, done);
+    if (indexedHappnInstance) indexedHappnInstance.stop({ reconnect: false }, done);
     else done();
   });
 
@@ -165,16 +160,13 @@ describe("integration/" + filename + "\n", function() {
    We are initializing 2 clients to test saving data against the database, one client will push data into the
    database whilst another listens for changes.
    */
-  before("should initialize the clients", function(callback) {
+  before('should initialize the clients', function(callback) {
     try {
       defaultHappnInstance.services.session.localClient(function(e, instance) {
         if (e) return callback(e);
         defaultclient = instance;
 
-        indexedHappnInstance.services.session.localClient(function(
-          e,
-          instance
-        ) {
+        indexedHappnInstance.services.session.localClient(function(e, instance) {
           if (e) return callback(e);
           indexedclient = instance;
 
@@ -186,11 +178,8 @@ describe("integration/" + filename + "\n", function() {
     }
   });
 
-  it("should find the default index record", function(done) {
-    defaultclient.get("/_SYSTEM/INDEXES/happn_path_index", null, function(
-      e,
-      result
-    ) {
+  it('should find the default index record', function(done) {
+    defaultclient.get('/_SYSTEM/INDEXES/happn_path_index', null, function(e, result) {
       if (e) return done(e);
 
       expect(result).to.not.be(null);
@@ -203,14 +192,14 @@ describe("integration/" + filename + "\n", function() {
     });
   });
 
-  it("should find the configured index records", function(done) {
-    indexedclient.get("/_SYSTEM/INDEXES/*", null, function(e, results) {
+  it('should find the configured index records', function(done) {
+    indexedclient.get('/_SYSTEM/INDEXES/*', null, function(e, results) {
       if (e) return done(e);
 
       expect(results.length == 2).to.be(true);
 
       results.forEach(function(indexRecord) {
-        if (indexRecord._meta.path == "/_SYSTEM/INDEXES/happn_path_index") {
+        if (indexRecord._meta.path == '/_SYSTEM/INDEXES/happn_path_index') {
           expect(indexRecord.fields).to.eql({ path: 1 });
           expect(indexRecord.options).to.eql({ unique: true, w: 1 });
         } else {
@@ -223,27 +212,26 @@ describe("integration/" + filename + "\n", function() {
     });
   });
 
-  it("should find the configured indexes in mongo", function(done) {
-    var mongodb = require("mongodb"),
+  it('should find the configured indexes in mongo', function(done) {
+    var mongodb = require('mongodb'),
       mongoclient = mongodb.MongoClient;
 
     mongoclient.connect(
-      "mongodb://127.0.0.1:27017",
+      'mongodb://127.0.0.1:27017',
       { useNewUrlParser: true, useUnifiedTopology: true },
       function(err, client) {
         if (err) return done(err);
 
-        var database = client.db("indexes_configured_test_db");
+        var database = client.db('indexes_configured_test_db');
 
-        var collection = database.collection("indexes_configured_test_db_coll");
+        var collection = database.collection('indexes_configured_test_db_coll');
 
         collection.listIndexes().toArray(function(e, indexes) {
           var uniqueFound = false;
 
           for (var i = 0; i < indexes.length; i++) {
             var index = indexes[i];
-            if (index["unique"] && index["key"] && index["key"].path == 1)
-              uniqueFound = true;
+            if (index['unique'] && index['key'] && index['key'].path == 1) uniqueFound = true;
           }
 
           expect(uniqueFound).to.be(true);
