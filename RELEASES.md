@@ -45,3 +45,11 @@
 - $regex filter tests introduced
 - cleaned up code, using let instead of var, refactored to remove \_this where possible
 - improved test coverage and test helper for happn tests
+
+3.0.0 2019-05-24
+----------------
+- removed $not sift, this will result in breaking code possibly where not was being used in a non-mongo standard way
+- further cleanups of datastore
+- added count feature
+- added aggregate feature
+- add collation option

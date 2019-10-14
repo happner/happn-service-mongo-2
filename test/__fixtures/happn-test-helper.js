@@ -3,7 +3,6 @@ const service = happn.service;
 const clearMongo = require('./clear-mongo-collection');
 
 class HappnTestHelper {
-
   constructor(serverConfig) {
     this.serverConfig = serverConfig;
   }
@@ -14,21 +13,24 @@ class HappnTestHelper {
 
   async clearMongoCollection() {
     return new Promise((resolve, reject) => {
-      clearMongo('mongodb://localhost', this.serverConfig.services.data.config.datastores[0].collection, (e) => {
-        if (e) return reject(e);
-        resolve();
-      });
+      clearMongo(
+        'mongodb://localhost',
+        this.serverConfig.services.data.config.datastores[0].collection,
+        e => {
+          if (e) return reject(e);
+          resolve();
+        }
+      );
     });
   }
 
   async createService() {
     return new Promise((resolve, reject) => {
-      service.create(this.serverConfig,
-        (e, happnInst) => {
-          if (e) return reject(e);
-          resolve(happnInst);
-        });
-    })
+      service.create(this.serverConfig, (e, happnInst) => {
+        if (e) return reject(e);
+        resolve(happnInst);
+      });
+    });
   }
 
   async createLocalClient() {
@@ -56,7 +58,7 @@ class HappnTestHelper {
 
   async tearDown() {
     return new Promise((resolve, reject) => {
-      this.service.stop(function(e){
+      this.service.stop(function(e) {
         if (e) return reject(e);
         resolve();
       });
