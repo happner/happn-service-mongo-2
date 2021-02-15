@@ -160,7 +160,8 @@ describe('integration/' + filename + '\n', function() {
                   $sum: '$data.id'
                 }
               }
-            }
+            },
+            { $sort: { total: 1 } }
           ]
         }
       },
@@ -168,6 +169,10 @@ describe('integration/' + filename + '\n', function() {
         if (e) return callback(e);
         expect(result.data.value.length).to.be(4);
         expect(result.data.value).to.eql([
+          {
+            _id: 'Odd',
+            total: 1
+          },
           {
             _id: 'ODD',
             total: 5
@@ -179,10 +184,6 @@ describe('integration/' + filename + '\n', function() {
           {
             _id: 'odd',
             total: 12
-          },
-          {
-            _id: 'Odd',
-            total: 1
           }
         ]);
         callback();
@@ -228,5 +229,34 @@ describe('integration/' + filename + '\n', function() {
         callback();
       }
     );
+  });
+  this.timeout(60000);
+  describe('time out on expensive queries', function() {
+    before('it creates large-ish testdata', async () => {
+      for (let i = 0; i < 5000; i++) {
+        await createTestItem(
+          `largeDataset${i}`,
+          'largeDataset',
+          `some test data to search on ${i}`
+        );
+      }
+    });
+    it('maxTimeMS causes timeout ', function(done) {
+      serviceInstance.find(
+        '/searches-and-aggregation/*',
+        {
+          criteria: {
+            'data.custom': { $regex: '.*data to search on 4900.*' }
+          },
+          options: {
+            maxTimeMS: 1
+          }
+        },
+        (err, data) => {
+          expect(err.code).to.be(50);
+          done();
+        }
+      );
+    });
   });
 });

@@ -181,6 +181,7 @@ MongoProvider.prototype.find = function(path, parameters, callback) {
 
   if (parameters.options.limit) searchOptions.limit = parameters.options.limit;
   if (parameters.options.skip) searchOptions.skip = parameters.options.skip;
+  if (parameters.options.maxTimeMS) searchOptions.maxTimeMS = parameters.options.maxTimeMS;
 
   if (parameters.count || parameters.options.count) {
     this.db.count(pathCriteria, searchOptions, function(e, count) {

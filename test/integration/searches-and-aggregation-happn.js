@@ -156,13 +156,18 @@ describe('integration/' + filename + '\n', function() {
                 $sum: '$data.id'
               }
             }
-          }
+          },
+          { $sort: { total: 1 } }
         ]
       },
       function(e, items) {
         if (e) return callback(e);
         expect(items.value.length).to.be(4);
         expect(items.value).to.eql([
+          {
+            _id: 'Odd',
+            total: 1
+          },
           {
             _id: 'ODD',
             total: 5
@@ -174,10 +179,6 @@ describe('integration/' + filename + '\n', function() {
           {
             _id: 'odd',
             total: 12
-          },
-          {
-            _id: 'Odd',
-            total: 1
           }
         ]);
         callback();
