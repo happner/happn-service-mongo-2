@@ -230,33 +230,4 @@ describe('integration/' + filename + '\n', function() {
       }
     );
   });
-  this.timeout(60000);
-  describe('time out on expensive queries', function() {
-    before('it creates large-ish testdata', async () => {
-      for (let i = 0; i < 5000; i++) {
-        await createTestItem(
-          `largeDataset${i}`,
-          'largeDataset',
-          `some test data to search on ${i}`
-        );
-      }
-    });
-    it('maxTimeMS causes timeout ', function(done) {
-      serviceInstance.find(
-        '/searches-and-aggregation/*',
-        {
-          criteria: {
-            'data.custom': { $regex: '.*data to search on 4900.*' }
-          },
-          options: {
-            maxTimeMS: 1
-          }
-        },
-        (err, data) => {
-          expect(err.code).to.be(50);
-          done();
-        }
-      );
-    });
-  });
 });
