@@ -73,7 +73,7 @@ describe('integration/' + filename + '\n', function() {
       error = new Error('test timed out');
     }, 120000);
     while (!error) {
-      await serviceInstance.find(
+      serviceInstance.find(
         '/searches-and-aggregation/*',
         {
           criteria: {
