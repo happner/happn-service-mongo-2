@@ -1,7 +1,7 @@
 {
   "name": "happn-service-mongo-2",
   "description": "service plugin for running happn on a mongo database, for happn-3 instances",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "main": "./lib/index",
   "scripts": {
     "lint": "eslint '**/*.js'",
@@ -26,6 +26,7 @@
     "redis-lru-cache": "0.1.0"
   },
   "devDependencies": {
+    "await-delay": "^1.0.0",
     "byline": "^5.0.0",
     "coveralls": "^3.0.6",
     "eslint": "^5.16.0",
@@ -35,9 +36,9 @@
     "gulp": "^3.9.0",
     "happn-3": "latest",
     "happn-tests-2": "latest",
+    "mocha": "3.4.2",
     "nyc": "^13.3.0",
     "prettier": "^1.18.2",
-    "mocha": "3.4.2",
     "shortid": "^2.2.4"
   },
   "readmeFilename": "README.md"
