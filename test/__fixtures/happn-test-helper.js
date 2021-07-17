@@ -5,6 +5,7 @@ const clearMongo = require('./clear-mongo-collection');
 class HappnTestHelper {
   constructor(serverConfig) {
     this.serverConfig = serverConfig;
+    this.delay = require('await-delay');
   }
 
   static create(serverConfig) {

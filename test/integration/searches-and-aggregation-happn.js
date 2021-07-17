@@ -31,6 +31,11 @@ describe('integration/' + filename + '\n', function() {
     }
   };
 
+  before('should clear the mongo collection', function(callback) {
+    let clearMongo = require('../__fixtures/clear-mongo-collection');
+    clearMongo('mongodb://localhost/happn', 'happn', callback);
+  });
+
   before('should initialize the service and clients', async () => {
     test_id = Date.now() + '_' + require('shortid').generate();
     happnTestHelper = require('../__fixtures/happn-test-helper').create(config);
