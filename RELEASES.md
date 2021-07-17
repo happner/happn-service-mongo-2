@@ -54,6 +54,10 @@
 - added aggregate feature
 - add collation option
 
-3.0.1 2020-02-12
+3.1.0 2020-02-12
 ----------------
 - added support maxTimeMS parameter for find queries
+
+3.1.1 2021-06-29
+----------------
+- fixed maxTimeMS test
