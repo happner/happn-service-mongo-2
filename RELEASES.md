@@ -61,3 +61,7 @@
 3.1.1 2021-06-29
 ----------------
 - fixed maxTimeMS test
+
+3.1.2 2021-07-20
+----------------
+- added docker instructions to readme
