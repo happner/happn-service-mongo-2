@@ -5,7 +5,20 @@
 Introduction
 -------------------------
 
-Two configuration options:
+### installing mongo and redis on your local machine - for testing:
+```bash
+# mongo latest
+docker pull mongo
+
+docker run -p 27017:27017 -d mongo
+
+# redis
+docker pull redis
+
+docker run -p 6379:6379 -d redis
+```
+
+### Two configuration options:
 
 ```javascript
 config = {
