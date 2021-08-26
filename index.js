@@ -297,10 +297,9 @@ MongoProvider.prototype.upsert = function(path, setData, options, dataWasMerged,
 MongoProvider.prototype.remove = function(path, callback) {
   return this.db.remove(this.getPathCriteria(path), function(e, removed) {
     if (e) return callback(e);
-
     callback(null, {
       data: {
-        removed: removed.result.n
+        removed: removed.deletedCount
       },
       _meta: {
         timestamp: Date.now(),
