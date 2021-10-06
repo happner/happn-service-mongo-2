@@ -65,3 +65,8 @@
 3.1.2 2021-07-20
 ----------------
 - added docker instructions to readme
+
+4.0.0 2021-07-20
+----------------
+- mongo-4 driver
+- removed redis cache - was never used
