@@ -6,7 +6,7 @@
   "scripts": {
     "lint": "eslint '**/*.js'",
     "test": "npm run lint && mocha silence.js test/integration/**",
-    "test-cover": "npm run lint && nyc _mocha --exit silence.js test/integration/** test/unit/**",
+    "test-cover": "npm run lint && nyc  --reporter=lcov --reporter=text-summary _mocha --exit silence.js test/integration/** test/unit/**",
     "lint-fix": "eslint '**/*.js' --fix",
     "happn-tests": "node test/integration/happn*",
     "release": "rm -rf node_modules && rm -f package-lock.json && npm install && npm test"
