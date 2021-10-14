@@ -1,8 +1,7 @@
 {
   "name": "happn-service-mongo-2",
   "description": "service plugin for running happn on a mongo database, for happn-3 instances",
-  "version": "4.0.0",
-  "main": "./lib/index",
+  "version": "4.0.1",
   "scripts": {
     "lint": "eslint '**/*.js'",
     "test": "npm run lint && mocha silence.js test/integration/**",

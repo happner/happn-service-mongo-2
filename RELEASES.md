@@ -70,3 +70,7 @@
 ----------------
 - mongo-4 driver
 - removed redis cache - was never used
+
+4.0.1 2021-07-20
+----------------
+- SMC-4388: remove main from package
