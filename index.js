@@ -85,8 +85,6 @@ MongoProvider.prototype.__createIndexes = function(config, callback) {
                 data: indexConfig,
                 creation_result: result
               },
-              {},
-              false,
               indexCB
             );
           });
@@ -224,7 +222,14 @@ MongoProvider.prototype.increment = function(path, counterName, increment, callb
   return this.db.increment(path, counterName, increment, callback);
 };
 
-MongoProvider.prototype.upsert = function(path, setData, options, dataWasMerged, callback) {
+MongoProvider.prototype.upsert = function(path, setData, options, callback) {
+  if (typeof options === 'function') {
+    callback = options;
+    options = {};
+  }
+  if (options == null) {
+    options = {};
+  }
   let modifiedOn = Date.now();
 
   let setParameters = {
@@ -249,7 +254,7 @@ MongoProvider.prototype.upsert = function(path, setData, options, dataWasMerged,
 
     return this.db.insert(setParameters.$set, options, (err, response) => {
       if (err) return callback(err);
-      callback(null, response, setParameters.$set, false, this.__getMeta(response));
+      callback(null, response, this.__getMeta(response));
     });
   }
 
@@ -262,7 +267,7 @@ MongoProvider.prototype.upsert = function(path, setData, options, dataWasMerged,
       options,
       (err, response) => {
         if (err) return callback(err);
-        callback(null, response, response, false, this.__getMeta(response));
+        callback(null, response, this.__getMeta(response));
       }
     );
   }
@@ -283,13 +288,13 @@ MongoProvider.prototype.upsert = function(path, setData, options, dataWasMerged,
             setParameters,
             (err, response) => {
               if (err) return callback(err);
-              callback(null, response, response, true, this.__getMeta(response));
+              callback(null, response, this.__getMeta(response));
             }
           );
         }
         return callback(err);
       }
-      callback(null, response, response, true, this.__getMeta(response));
+      callback(null, response, this.__getMeta(response));
     }
   );
 };

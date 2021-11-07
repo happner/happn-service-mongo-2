@@ -41,9 +41,7 @@ function goCrazy(instruction) {
       serviceInstance.upsert(
         '/upsert/' + instruction.testId + '/' + time,
         { data: { test: 'data' } },
-        {},
-        false,
-        function(e, response, created) {
+        function(e) {
           if (e) failures.push(e.message);
           timeCB();
         }

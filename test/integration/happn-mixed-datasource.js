@@ -1,13 +1,9 @@
 describe('happn-tests, mixed datasource', function() {
   this.timeout(5000);
-
+  let fs = require('fs');
   let expect = require('expect.js');
-  let happn = require('happn-3');
-  let service = happn.service;
   let async = require('async');
-  let test_secret = 'test_secret';
   let mode = 'embedded';
-  let happnInstance = null;
   let test_id;
   let path = require('path');
   var happnTestHelper;
@@ -43,6 +39,11 @@ describe('happn-tests, mixed datasource', function() {
   };
 
   before('should initialize the service and clients', async () => {
+    try {
+      fs.unlinkSync(db_local_file_path);
+    } catch (e) {
+      //do nothing
+    }
     test_id = Date.now() + '_' + require('shortid').generate();
     happnTestHelper = require('../__fixtures/happn-test-helper').create(config);
     await happnTestHelper.initialize();
@@ -67,7 +68,11 @@ describe('happn-tests, mixed datasource', function() {
 
           var record = JSON.parse(line);
 
-          if (record._id == path) {
+          if (
+            record.operation != null &&
+            record.operation.operationType === 'UPSERT' &&
+            record.operation.arguments[0] === path
+          ) {
             found = true;
             stream.end();
             return callback(null, record);
@@ -633,79 +638,6 @@ describe('happn-tests, mixed datasource', function() {
     }
   });
 
-  it('should tag some test data', function(callback) {
-    var randomTag = require('shortid').generate();
-
-    publisherclient.set(
-      '/1_eventemitter_embedded_sanity/' + test_id + '/test/tag',
-      {
-        property1: 'property1',
-        property2: 'property2',
-        property3: 'property3'
-      },
-      {
-        noPublish: true
-      },
-      function(e, result) {
-        ////////////////////console.log('did set');
-        ////////////////////console.log([e, result]);
-
-        if (e) return callback(e);
-
-        publisherclient.set(
-          '/1_eventemitter_embedded_sanity/' + test_id + '/test/tag',
-          null,
-          {
-            tag: randomTag,
-            merge: true,
-            noPublish: true
-          },
-          function(e, result) {
-            //console.log(e);
-
-            if (e) return callback(e);
-
-            ////////////////////console.log('merge tag results');
-            ////////////////////console.log(e);
-            ////////////////////console.log(result);
-
-            expect(result.data.property1).to.be('property1');
-            expect(result.data.property2).to.be('property2');
-            expect(result.data.property3).to.be('property3');
-
-            publisherclient.get(
-              '/_TAGS/1_eventemitter_embedded_sanity/' + test_id + '/test/tag/*',
-              null,
-              function(e, results) {
-                expect(e).to.be(null);
-
-                expect(results.length > 0).to.be(true);
-
-                var found = false;
-
-                results.map(function(tagged) {
-                  if (found) return;
-
-                  if (tagged._meta.tag == randomTag) {
-                    expect(tagged.data.property1).to.be('property1');
-                    expect(tagged.data.property2).to.be('property2');
-                    expect(tagged.data.property3).to.be('property3');
-                    found = true;
-                  }
-                });
-
-                if (!found) callback("couldn't find the tag snapshot");
-                else callback();
-              }
-            );
-          }
-        );
-      }
-    );
-  });
-
-  //  We set the listener client to listen for a PUT event according to a path, then we set a value with the publisher client.
-
   it('the listener should pick up a single published event', function(callback) {
     try {
       //first listen for the change
@@ -829,50 +761,6 @@ describe('happn-tests, mixed datasource', function() {
       callback(e);
     }
   });
-
-  //We are testing pushing a specific value to a path which will actually become an array in the database
-
-  it('the publisher should push a sibling and get all siblings', function(callback) {
-    try {
-      var test_path_end = require('shortid').generate();
-
-      publisherclient.setSibling(
-        '1_eventemitter_embedded_sanity/' + test_id + '/siblings/' + test_path_end,
-        {
-          property1: 'sib_post_property1',
-          property2: 'sib_post_property2'
-        },
-        function(e, results) {
-          expect(e == null).to.be(true);
-
-          publisherclient.setSibling(
-            '1_eventemitter_embedded_sanity/' + test_id + '/siblings/' + test_path_end,
-            {
-              property1: 'sib_post_property1',
-              property2: 'sib_post_property2'
-            },
-            function(e, results) {
-              expect(e == null).to.be(true);
-
-              //the child method returns a child in the collection with a specified id
-              publisherclient.get(
-                '1_eventemitter_embedded_sanity/' + test_id + '/siblings/' + test_path_end + '/*',
-                null,
-                function(e, getresults) {
-                  expect(e == null).to.be(true);
-                  expect(getresults.length == 2).to.be(true);
-                  callback(e);
-                }
-              );
-            }
-          );
-        }
-      );
-    } catch (e) {
-      callback(e);
-    }
-  });
-
   //  We set the listener client to listen for a PUT event according to a path, then we set a value with the publisher client.
 
   it('the listener should pick up a single published event', function(callback) {

@@ -43,19 +43,15 @@ describe('integration/' + filename + '\n', function() {
     var beforeCreatedOrModified = Date.now();
 
     setTimeout(function() {
-      serviceInstance.upsert('/set/' + testId, { data: { test: 'data' } }, {}, false, function(
+      serviceInstance.upsert('/set/' + testId, { data: { test: 'data' } }, {}, function(
         e,
-        response,
         created,
-        upsert,
         meta
       ) {
         if (e) return callback(e);
 
         expect(created.data.test).to.equal('data');
-
         expect(meta.created > beforeCreatedOrModified).to.equal(true);
-
         expect(meta.modified > beforeCreatedOrModified).to.equal(true);
 
         callback();
@@ -64,11 +60,7 @@ describe('integration/' + filename + '\n', function() {
   });
 
   it('gets data', function(callback) {
-    serviceInstance.upsert('/get/' + testId, { data: { test: 'data' } }, {}, false, function(
-      e,
-      response,
-      created
-    ) {
+    serviceInstance.upsert('/get/' + testId, { data: { test: 'data' } }, function(e, created) {
       if (e) return callback(e);
 
       expect(created.data.test).to.equal('data');
@@ -96,7 +88,7 @@ describe('integration/' + filename + '\n', function() {
   });
 
   it('removes data', function(callback) {
-    serviceInstance.upsert('/remove/' + testId, { test: 'data' }, {}, false, function(e, response) {
+    serviceInstance.upsert('/remove/' + testId, { test: 'data' }, function(e, response) {
       if (e) return callback(e);
 
       serviceInstance.remove('/remove/' + testId, function(e, response) {
@@ -111,16 +103,10 @@ describe('integration/' + filename + '\n', function() {
   });
 
   it('removes multiple data', function(callback) {
-    serviceInstance.upsert('/remove/multiple/1/' + testId, { test: 'data' }, {}, false, function(
-      e,
-      response
-    ) {
+    serviceInstance.upsert('/remove/multiple/1/' + testId, { test: 'data' }, function(e) {
       if (e) return callback(e);
 
-      serviceInstance.upsert('/remove/multiple/2/' + testId, { test: 'data' }, {}, false, function(
-        e,
-        response
-      ) {
+      serviceInstance.upsert('/remove/multiple/2/' + testId, { test: 'data' }, function(e) {
         if (e) return callback(e);
 
         serviceInstance.remove('/remove/multiple/*', function(e, response) {
@@ -137,35 +123,20 @@ describe('integration/' + filename + '\n', function() {
   });
 
   it('gets data with wildcard', function(callback) {
-    serviceInstance.upsert(
-      '/get/multiple/1/' + testId,
-      { data: { test: 'data' } },
-      {},
-      false,
-      function(e, response) {
+    serviceInstance.upsert('/get/multiple/1/' + testId, { data: { test: 'data' } }, function(e) {
+      if (e) return callback(e);
+
+      serviceInstance.upsert('/get/multiple/2/' + testId, { data: { test: 'data' } }, function(e) {
         if (e) return callback(e);
 
-        serviceInstance.upsert(
-          '/get/multiple/2/' + testId,
-          { data: { test: 'data' } },
-          {},
-          false,
-          function(e, response) {
-            if (e) return callback(e);
-
-            serviceInstance.find('/get/multiple/*/' + testId, {}, function(e, response) {
-              expect(response.length).to.equal(2);
-
-              expect(response[0].data.test).to.equal('data');
-
-              expect(response[1].data.test).to.equal('data');
-
-              callback();
-            });
-          }
-        );
-      }
-    );
+        serviceInstance.find('/get/multiple/*/' + testId, function(_e, response) {
+          expect(response.length).to.equal(2);
+          expect(response[0].data.test).to.equal('data');
+          expect(response[1].data.test).to.equal('data');
+          callback();
+        });
+      });
+    });
   });
 
   it('gets data with complex search', function(callback) {
@@ -206,11 +177,8 @@ describe('integration/' + filename + '\n', function() {
     serviceInstance.upsert(
       '/1_eventemitter_embedded_sanity/' + testId + '/testsubscribe/data/complex/' + test_path_end,
       { data: complex_obj },
-      {},
-      false,
-      function(e, put_result) {
+      function(e) {
         expect(e == null).to.be(true);
-
         serviceInstance.upsert(
           '/1_eventemitter_embedded_sanity/' +
             testId +
@@ -218,11 +186,8 @@ describe('integration/' + filename + '\n', function() {
             test_path_end +
             '/1',
           { data: complex_obj },
-          {},
-          false,
-          function(e, put_result) {
+          function(e) {
             expect(e == null).to.be(true);
-
             serviceInstance.upsert(
               '/1_eventemitter_embedded_sanity/' +
                 testId +
@@ -230,9 +195,7 @@ describe('integration/' + filename + '\n', function() {
                 test_path_end +
                 '/2',
               { test: 'data' },
-              {},
-              false,
-              function(e, put_result) {
+              function(e) {
                 expect(e == null).to.be(true);
 
                 serviceInstance.find(
@@ -276,12 +239,10 @@ describe('integration/' + filename + '\n', function() {
       data: 'notok'
     };
 
-    serviceInstance.upsert('/not_get/' + testId + '/ok/1', test_obj, {}, false, function(e) {
+    serviceInstance.upsert('/not_get/' + testId + '/ok/1', test_obj, function(e) {
       expect(e == null).to.be(true);
 
-      serviceInstance.upsert('/not_get/' + testId + '/_notok_/1', test_obj1, {}, false, function(
-        e
-      ) {
+      serviceInstance.upsert('/not_get/' + testId + '/_notok_/1', test_obj1, function(e) {
         expect(e == null).to.be(true);
 
         var listOptions = { criteria: { path: { $not: /.*_notok_.*/ } } };
@@ -322,7 +283,7 @@ describe('integration/' + filename + '\n', function() {
       function(item, callback) {
         var testPath = base_path + item.item_sort_id;
 
-        serviceInstance.upsert(testPath, { data: item }, { noPublish: true }, false, function(e) {
+        serviceInstance.upsert(testPath, { data: item }, { noPublish: true }, function(e) {
           if (e) return callback(e);
 
           callback();

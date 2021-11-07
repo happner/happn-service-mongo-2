@@ -51,8 +51,6 @@ describe('integration/' + filename + '\n', function() {
             id
           }
         },
-        {},
-        false,
         function(e, response, created) {
           if (e) return reject(e);
           resolve(created);

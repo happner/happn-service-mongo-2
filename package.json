@@ -1,7 +1,7 @@
 {
   "name": "happn-service-mongo-2",
   "description": "service plugin for running happn on a mongo database, for happn-3 instances",
-  "version": "4.0.1",
+  "version": "5.0.0-prerelease-1",
   "scripts": {
     "lint": "eslint '**/*.js'",
     "test": "npm run lint && mocha silence.js test/integration/**",
@@ -31,8 +31,7 @@
     "eslint-plugin-prettier": "^3.1.1",
     "expect.js": "*",
     "gulp": "^3.9.0",
-    "happn-3": "latest",
-    "happn-tests-2": "latest",
+    "happn-3": "prerelease-12",
     "mocha": "3.4.2",
     "nyc": "^13.3.0",
     "prettier": "^1.18.2",
