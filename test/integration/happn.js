@@ -1189,6 +1189,26 @@ describe('happn-tests', function() {
         );
       });
 
+      it('the listener can call count for data', function(done) {
+        var test_string = require('shortid').generate();
+        var test_base_url = '/count_happn/' + test_id + '/set/string/' + test_string;
+        publisherclient.set(
+          test_base_url,
+          test_string,
+          {
+            noPublish: true
+          },
+          function(e) {
+            expect(e).to.not.exist;
+            listenerclient.count(test_base_url, function(e, count) {
+              expect(e).to.not.exist;
+              expect(count.value).to.eql(1);
+              done();
+            });
+          }
+        );
+      });
+
       it('increments a value on a path, multiple gauges', function(done) {
         let async = require('async');
 
